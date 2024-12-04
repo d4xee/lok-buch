@@ -52,12 +52,12 @@ pub fn lok_as_element(lok: &Lok) -> Container<Message> {
 
     container(row![
         row![
-            text!("{}", lok.address),
+            text!("{}", lok.get_address_pretty()),
             horizontal_space(),
         ],
 
         row![
-            text!("{}", lok.lokmaus_name),
+            text!("{}", lok.get_lokmaus_name_pretty()),
             horizontal_space(),
         ],
 

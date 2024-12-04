@@ -5,7 +5,6 @@ mod app;
 use crate::app::{Lokbuch, SavedData};
 use crate::database::lok::Lok;
 use sqlx::{Pool, Sqlite};
-use std::default::Default;
 
 
 async fn add_new_lok(db: Pool<Sqlite>, lok: Lok) -> Result<(), ()> {
@@ -36,7 +35,7 @@ async fn init_database() -> SavedData {
     SavedData { db: db.clone(), loks }
 }
 
-async fn update_lok_list(db: Pool<Sqlite>) -> Vec<Lok> {
+async fn get_updated_lok_list(db: Pool<Sqlite>) -> Vec<Lok> {
     let mut loks = database::lok::get_all_loks(&db).await;
     loks.sort();
 

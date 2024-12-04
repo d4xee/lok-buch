@@ -4,7 +4,7 @@ use iced::widget::{button, center, container, horizontal_space, keyed_column, ro
 use rfd::MessageDialogResult;
 use sqlx::{Pool, Sqlite};
 use crate::database::lok::Lok;
-use crate::{delete_lok, init_database, ui, update_lok, update_lok_list};
+use crate::{delete_lok, init_database, ui, update_lok, get_updated_lok_list};
 
 #[derive(Debug)]
 pub enum Lokbuch {
@@ -142,10 +142,18 @@ impl Lokbuch {
                     Message::Edit(lok) => {
                         let lok_clone = lok.clone();
                         let name_input = lok_clone.name.clone();
-                        let address_input = lok_clone.address.to_string();
-                        let lok_maus_name_input = lok_clone.lokmaus_name.clone();
-                        let producer_input = lok_clone.producer.clone();
-                        let management_input = lok_clone.management.clone();
+                        let address_input = if let Some(address) = lok_clone.address.clone() {
+                            address.to_string()
+                        } else { String::new() } ;
+                        let lok_maus_name_input = if let Some(lokmaus_name) = lok_clone.lokmaus_name.clone() {
+                            lokmaus_name
+                        } else { String::new() };
+                        let producer_input = if let Some(producer) = lok_clone.producer.clone() {
+                            producer
+                        } else { String::new() };
+                        let management_input = if let Some(management) = lok_clone.management.clone() {
+                            management
+                        } else { String::new() };
 
                         *self = Lokbuch::EditView(
                             State {
@@ -164,7 +172,7 @@ impl Lokbuch {
 
                     Message::Remove(lok) => {
                         task::block_on(delete_lok(state.db.clone(), lok.clone()));
-                        let loks = task::block_on(update_lok_list(state.db.clone()));
+                        let loks = task::block_on(get_updated_lok_list(state.db.clone()));
 
                         *self = Lokbuch::HomeView(
                             State {
@@ -229,13 +237,13 @@ impl Lokbuch {
                             return Task::perform(res.show(), Message::InputFailure);
                         }
 
-                        let new_lok = Lok {
-                            name: state.name_input.clone(),
-                            address: state.address_input.clone().parse::<i32>().unwrap(),
-                            lokmaus_name: state.lok_maus_name_input.clone().to_string().to_ascii_uppercase(),
-                            producer: state.producer_input.clone(),
-                            management: state.management_input.clone(),
-                        };
+                        let new_lok = Lok::new_from_raw_data(
+                            state.name_input.clone(),
+                            state.address_input.clone().parse::<i32>().unwrap(),
+                            state.lok_maus_name_input.clone().to_string().to_ascii_uppercase(),
+                            state.producer_input.clone(),
+                            state.management_input.clone(),
+                        );
 
                         let db = state.db.clone();
 
@@ -319,20 +327,20 @@ impl Lokbuch {
                             return Task::perform(res.show(), Message::InputFailure);
                         }
 
-                        let new_lok = Lok {
-                            name: state.name_input.clone(),
-                            address: state.address_input.clone().parse::<i32>().unwrap(),
-                            lokmaus_name: state.lok_maus_name_input.clone().to_string().to_ascii_uppercase(),
-                            producer: state.producer_input.clone(),
-                            management: state.management_input.clone(),
-                        };
+                        let new_lok = Lok::new_from_raw_data(
+                            state.name_input.clone(),
+                            state.address_input.clone().parse::<i32>().unwrap(),
+                            state.lok_maus_name_input.clone().to_string().to_ascii_uppercase(),
+                            state.producer_input.clone(),
+                            state.management_input.clone(),
+                        );
 
                         let old_lok = state.selected_lok.clone().unwrap();
 
                         let db = state.db.clone();
 
                         task::block_on(update_lok(db, old_lok, new_lok));
-                        let loks = task::block_on(update_lok_list(state.db.clone()));
+                        let loks = task::block_on(get_updated_lok_list(state.db.clone()));
 
                         *self = Lokbuch::HomeView(
                             State {
@@ -651,7 +659,7 @@ impl Lokbuch {
                     text("Adresse")
                     .size(ui::TEXT_SIZE),
 
-                    text!("{}", lok.address)
+                    text!("{}", lok.get_address_pretty())
                     .size(ui::TEXT_SIZE),
 
                     vertical_space(),
@@ -667,7 +675,7 @@ impl Lokbuch {
                     text("Hersteller")
                     .size(ui::TEXT_SIZE),
 
-                    text!("{}", lok.producer)
+                    text!("{}", lok.get_producer_pretty())
                     .size(ui::TEXT_SIZE),
                 ).spacing(10);
 
@@ -675,7 +683,7 @@ impl Lokbuch {
                     text("LOKmaus-Anzeigename")
                     .size(ui::TEXT_SIZE),
 
-                    text!("{}", lok.lokmaus_name)
+                    text!("{}", lok.get_lokmaus_name_pretty())
                     .size(ui::TEXT_SIZE),
 
                     vertical_space(),
@@ -686,7 +694,7 @@ impl Lokbuch {
                     text("Bahnverwaltung")
                     .size(ui::TEXT_SIZE),
 
-                    text!("{}", lok.management)
+                    text!("{}", lok.get_management_pretty())
                     .size(ui::TEXT_SIZE)
                 ].spacing(10);
 

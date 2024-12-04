@@ -4,10 +4,10 @@ use std::cmp::Ordering;
 #[derive(Clone, Debug, Eq)]
 pub struct Lok {
     pub name: String,
-    pub address: i32,
-    pub lokmaus_name: String,
-    pub producer: String,
-    pub management: String,
+    pub address: Option<i32>,
+    pub lokmaus_name: Option<String>,
+    pub producer: Option<String>,
+    pub management: Option<String>,
 }
 
 #[derive(sqlx::FromRow, Clone, Debug, Default)]
@@ -41,12 +41,8 @@ async fn get_all_raw_loks(db: &Pool<Sqlite>) -> Vec<RawLokData> {
 pub async fn get_all_loks(db: &Pool<Sqlite>) -> Vec<Lok> {
     let raw_loks = get_all_raw_loks(db).await;
 
-    raw_loks.iter().map(|lok| Lok {
-        name: lok.name.clone(),
-        address: lok.address,
-        lokmaus_name: lok.lokmaus_name.clone(),
-        producer: lok.producer.clone(),
-        management: lok.management.clone(),
+    raw_loks.iter().map(|data| {
+        Lok::new_from_raw_lok_data(data)
     }).collect()
 }
 
@@ -78,27 +74,106 @@ async fn update_raw_lok(db: &Pool<Sqlite>, mut old_lok: RawLokData, new_lok: Raw
 }
 
 impl Lok {
-    fn as_raw_lok(&self) -> RawLokData {
+    fn new(
+        name: String,
+        address: Option<i32>,
+        lokmaus_name: Option<String>,
+        producer: Option<String>,
+        management: Option<String>) -> Lok {
+        Lok {
+            name,
+            address,
+            lokmaus_name,
+            producer,
+            management,
+        }
+    }
+
+    fn new_from_raw_lok_data(raw_lok_data: &RawLokData) -> Lok {
+        Lok::new(
+            raw_lok_data.name.clone(),
+            if raw_lok_data.address < 0 { None } else { Some(raw_lok_data.address) },
+            if raw_lok_data.lokmaus_name.is_empty() { None } else { Some(raw_lok_data.lokmaus_name.clone()) },
+            if raw_lok_data.producer.is_empty() { None } else { Some(raw_lok_data.producer.clone()) },
+            if raw_lok_data.management.is_empty() { None } else { Some(raw_lok_data.management.clone()) },
+        )
+    }
+
+    pub fn new_from_raw_data(name: String, address: i32, lokmaus_name: String, producer: String, management: String) -> Lok {
+        Lok::new_from_raw_lok_data(&RawLokData {
+            name,
+            address,
+            lokmaus_name,
+            producer,
+            management,
+            ..Default::default()
+        })
+    }
+
+    fn as_raw_lok_data(&self) -> RawLokData {
         RawLokData {
             name: self.name.clone(),
-            address: self.address,
-            lokmaus_name: self.lokmaus_name.clone(),
-            producer: self.producer.clone(),
-            management: self.management.clone(),
+            address: if let Some(adress) = self.address {
+                adress
+            } else { -1 },
+            lokmaus_name: if let Some(lokmaus_name) = self.lokmaus_name.clone() {
+                lokmaus_name
+            } else { String::new() },
+            producer: if let Some(producer) = self.producer.clone() {
+                producer
+            } else { String::new() },
+            management: if let Some(management) = self.management.clone() {
+                management
+            } else { String::new() },
             ..RawLokData::default()
         }
     }
 
     pub async fn save(&self, db: &Pool<Sqlite>) {
-        insert_raw_lok(db, self.as_raw_lok()).await;
+        insert_raw_lok(db, self.as_raw_lok_data()).await;
     }
 
     pub async fn delete(&self, db: &Pool<Sqlite>) {
-        delete_raw_lok(db, self.as_raw_lok()).await;
+        delete_raw_lok(db, self.as_raw_lok_data()).await;
     }
 
     pub async fn update(&self, db: &Pool<Sqlite>, updated_lok: Lok) {
-        update_raw_lok(db, self.as_raw_lok(), updated_lok.as_raw_lok()).await;
+        update_raw_lok(db, self.as_raw_lok_data(), updated_lok.as_raw_lok_data()).await;
+    }
+
+    pub fn get_address_pretty(&self) -> String {
+        if let Some(address) = self.address {
+            address.to_string()
+        }
+        else {
+            String::from("---")
+        }
+    }
+
+    pub fn get_lokmaus_name_pretty(&self) -> String {
+        if let Some(lokmaus_name) = self.lokmaus_name.clone() {
+            lokmaus_name
+        }
+        else {
+            String::from("---")
+        }
+    }
+
+    pub fn get_producer_pretty(&self) -> String {
+        if let Some(producer) = self.producer.clone() {
+            producer
+        } else {
+            String::from("---")
+        }
+    }
+
+    pub fn get_management_pretty(&self) -> String {
+        if let Some(management) = self.management.clone() {
+            management
+        }
+        else {
+            String::from("---")
+        }
     }
 }
 
