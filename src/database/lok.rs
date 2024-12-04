@@ -1,7 +1,9 @@
 use sqlx::{Pool, Row, Sqlite};
 use std::cmp::Ordering;
+use std::collections::HashMap;
+use futures::join;
 
-#[derive(Clone, Debug, Eq)]
+#[derive(Clone, Debug, Eq, Hash)]
 pub struct Lok {
     pub name: String,
     pub address: Option<i32>,
@@ -38,12 +40,26 @@ async fn get_all_raw_loks(db: &Pool<Sqlite>) -> Vec<RawLokData> {
     sqlx::query_as("select * from loks").fetch_all(db).await.unwrap()
 }
 
-pub async fn get_all_loks(db: &Pool<Sqlite>) -> Vec<Lok> {
-    let raw_loks = get_all_raw_loks(db).await;
-
-    raw_loks.iter().map(|data| {
-        Lok::new_from_raw_lok_data(data)
+async fn get_all_ids(db: &Pool<Sqlite>) -> Vec<i32> {
+    sqlx::query("select id from loks").fetch_all(db).await.unwrap().iter().map(|item| {
+        item.get("id")
     }).collect()
+}
+
+pub async fn get_all_loks(db: &Pool<Sqlite>) -> HashMap<i32, Lok> {
+    let id_task = get_all_ids(db);
+    let raw_loks_task = get_all_raw_loks(db);
+
+    let data = join!(id_task, raw_loks_task);
+
+    let ids = data.0;
+    let raw_loks = data.1;
+
+    let raw_loks = raw_loks.iter().map(|data| {
+        Lok::new_from_raw_lok_data(data)
+    }).collect();
+
+    ids.iter().zip(raw_loks).collect()
 }
 
 async fn delete_raw_lok(db: &Pool<Sqlite>, mut lok: RawLokData) {
@@ -144,8 +160,7 @@ impl Lok {
     pub fn get_address_pretty(&self) -> String {
         if let Some(address) = self.address {
             address.to_string()
-        }
-        else {
+        } else {
             String::from("---")
         }
     }
@@ -153,8 +168,7 @@ impl Lok {
     pub fn get_lokmaus_name_pretty(&self) -> String {
         if let Some(lokmaus_name) = self.lokmaus_name.clone() {
             lokmaus_name
-        }
-        else {
+        } else {
             String::from("---")
         }
     }
@@ -170,8 +184,7 @@ impl Lok {
     pub fn get_management_pretty(&self) -> String {
         if let Some(management) = self.management.clone() {
             management
-        }
-        else {
+        } else {
             String::from("---")
         }
     }
@@ -179,7 +192,7 @@ impl Lok {
 
 impl PartialEq<Self> for Lok {
     fn eq(&self, other: &Self) -> bool {
-        self.address == other.address
+        self.address == other.address && self.name == other.name
     }
 }
 
@@ -191,7 +204,9 @@ impl PartialOrd<Self> for Lok {
 
 impl Ord for Lok {
     fn cmp(&self, other: &Self) -> Ordering {
-        self.address.cmp(&other.address)
+        if self.address != None || other.address != None {
+            self.address.cmp(&other.address)
+        } else { self.name.cmp(&other.name) }
     }
 }
 
