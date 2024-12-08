@@ -1,7 +1,9 @@
+use crate::ui;
+use futures::join;
 use sqlx::{Pool, Row, Sqlite};
 use std::cmp::Ordering;
 use std::collections::HashMap;
-use futures::join;
+use crate::database::preview_lok::PreviewLok;
 
 #[derive(Clone, Debug, Eq, Hash)]
 pub struct Lok {
@@ -22,7 +24,7 @@ struct RawLokData {
     management: String,
 }
 
-async fn insert_raw_lok(db: &Pool<Sqlite>, lok: RawLokData) {
+async fn insert_raw_lok(db: &Pool<Sqlite>, lok: RawLokData) -> i32 {
     let result = sqlx::query("INSERT INTO loks (name, address, lokmaus_name, producer, management) VALUES (?, ?, ?, ?, ?)")
         .bind(lok.name)
         .bind(lok.address)
@@ -33,7 +35,9 @@ async fn insert_raw_lok(db: &Pool<Sqlite>, lok: RawLokData) {
         .await
         .unwrap();
 
-    println!("Inserted new lok: {:?}", result)
+    println!("Inserted new lok: {:?}", result);
+
+    result.last_insert_rowid() as i32
 }
 
 async fn get_all_raw_loks(db: &Pool<Sqlite>) -> Vec<RawLokData> {
@@ -46,7 +50,7 @@ async fn get_all_ids(db: &Pool<Sqlite>) -> Vec<i32> {
     }).collect()
 }
 
-pub async fn get_all_loks(db: &Pool<Sqlite>) -> HashMap<i32, Lok> {
+pub async fn get_all_loks_new(db: &Pool<Sqlite>) -> HashMap<i32, Lok> {
     let id_task = get_all_ids(db);
     let raw_loks_task = get_all_raw_loks(db);
 
@@ -55,38 +59,49 @@ pub async fn get_all_loks(db: &Pool<Sqlite>) -> HashMap<i32, Lok> {
     let ids = data.0;
     let raw_loks = data.1;
 
-    let raw_loks = raw_loks.iter().map(|data| {
+    let raw_loks: Vec<Lok> = raw_loks.iter().map(|data| {
         Lok::new_from_raw_lok_data(data)
     }).collect();
 
-    ids.iter().zip(raw_loks).collect()
+    ids.into_iter().zip(raw_loks.into_iter()).collect()
 }
 
-async fn delete_raw_lok(db: &Pool<Sqlite>, mut lok: RawLokData) {
-    lok.get_id(db).await;
+pub async fn get_all_loks(db: &Pool<Sqlite>) -> Vec<Lok> {
+    let raw_loks = get_all_raw_loks(db).await;
 
+    raw_loks.iter().map(|data| {
+        Lok::new_from_raw_lok_data(data)
+    }).collect()
+}
+
+async fn delete_raw_lok_by_id(db: &Pool<Sqlite>, id: i32) {
     let result = sqlx::query("DELETE FROM loks WHERE id = ?")
-        .bind(lok.id)
+        .bind(id)
         .execute(db)
         .await.unwrap();
 
     println!("Deleted lok: {:?}", result)
 }
 
-async fn update_raw_lok(db: &Pool<Sqlite>, mut old_lok: RawLokData, new_lok: RawLokData) {
-    old_lok.get_id(db).await;
-
+async fn update_raw_lok(db: &Pool<Sqlite>, old_lok_id: i32, new_lok: RawLokData) {
     let result = sqlx::query("UPDATE loks SET address = ?, name = ?, lokmaus_name = ?, producer = ?, management = ? WHERE id = ?;")
         .bind(new_lok.address)
         .bind(new_lok.name)
         .bind(new_lok.lokmaus_name)
         .bind(new_lok.producer)
         .bind(new_lok.management)
-        .bind(old_lok.id)
+        .bind(old_lok_id)
         .execute(db)
         .await.unwrap();
 
     println!("updated lok: {:?}", result)
+}
+
+async fn get_raw_lok_by_id(db: &Pool<Sqlite>, id: i32) -> RawLokData {
+    sqlx::query_as("select * from loks where id = ? limit 1")
+        .bind(id)
+        .fetch_one(db)
+        .await.unwrap()
 }
 
 impl Lok {
@@ -145,23 +160,19 @@ impl Lok {
         }
     }
 
-    pub async fn save(&self, db: &Pool<Sqlite>) {
-        insert_raw_lok(db, self.as_raw_lok_data()).await;
+    pub fn as_preview_lok(&self, id: i32) -> PreviewLok {
+        PreviewLok::new(id, self.address.clone(), Some(self.name.clone()), self.lokmaus_name.clone())
     }
 
-    pub async fn delete(&self, db: &Pool<Sqlite>) {
-        delete_raw_lok(db, self.as_raw_lok_data()).await;
-    }
-
-    pub async fn update(&self, db: &Pool<Sqlite>, updated_lok: Lok) {
-        update_raw_lok(db, self.as_raw_lok_data(), updated_lok.as_raw_lok_data()).await;
+    pub async fn save(&self, db: &Pool<Sqlite>) -> i32 {
+        insert_raw_lok(db, self.as_raw_lok_data()).await
     }
 
     pub fn get_address_pretty(&self) -> String {
         if let Some(address) = self.address {
             address.to_string()
         } else {
-            String::from("---")
+            ui::NO_DATA_AVAILABLE_TEXT.to_string()
         }
     }
 
@@ -169,7 +180,7 @@ impl Lok {
         if let Some(lokmaus_name) = self.lokmaus_name.clone() {
             lokmaus_name
         } else {
-            String::from("---")
+            ui::NO_DATA_AVAILABLE_TEXT.to_string()
         }
     }
 
@@ -177,7 +188,7 @@ impl Lok {
         if let Some(producer) = self.producer.clone() {
             producer
         } else {
-            String::from("---")
+            ui::NO_DATA_AVAILABLE_TEXT.to_string()
         }
     }
 
@@ -185,8 +196,20 @@ impl Lok {
         if let Some(management) = self.management.clone() {
             management
         } else {
-            String::from("---")
+            ui::NO_DATA_AVAILABLE_TEXT.to_string()
         }
+    }
+
+    pub async fn get_lok_by_id(db: &Pool<Sqlite>, id: i32) -> Lok {
+        Lok::new_from_raw_lok_data(&get_raw_lok_by_id(db, id).await)
+    }
+
+    pub async fn delete_lok_by_id(db: &Pool<Sqlite>, id: i32) {
+        delete_raw_lok_by_id(db, id).await;
+    }
+
+    pub async fn update_lok_by_id(db: &Pool<Sqlite>, id: i32, updated_lok: Lok) {
+        update_raw_lok(db, id, updated_lok.as_raw_lok_data()).await;
     }
 }
 

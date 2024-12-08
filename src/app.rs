@@ -1,10 +1,12 @@
+use std::collections::HashMap;
 use async_std::task;
 use iced::{Center, Element, Fill, Left, Task};
 use iced::widget::{button, center, container, horizontal_space, keyed_column, row, scrollable, text, text_input, vertical_space, column};
 use rfd::MessageDialogResult;
 use sqlx::{Pool, Sqlite};
 use crate::database::lok::Lok;
-use crate::{delete_lok, init_database, ui, update_lok, get_updated_lok_list};
+use crate::{init_database, ui, update_lok_by_id, get_updated_lok_list, delete_lok_by_id};
+use crate::database::preview_lok::PreviewLok;
 
 #[derive(Debug)]
 pub enum Lokbuch {
@@ -19,26 +21,27 @@ pub enum Lokbuch {
 #[derive(Debug, Clone)]
 pub struct SavedData {
     pub(crate) db: Pool<Sqlite>,
-    pub(crate) loks: Vec<Lok>,
+    pub(crate) loks_preview: Vec<PreviewLok>,
 }
 
 #[derive(Debug, Clone)]
 pub struct State {
     db: Pool<Sqlite>,
-    loks: Vec<Lok>,
+    loks_preview: Vec<PreviewLok>,
+    loks_cache: HashMap<i32, Lok>,
     name_input: String,
     address_input: String,
     lok_maus_name_input: String,
     producer_input: String,
     management_input: String,
     search_input: String,
-    selected_lok: Option<Lok>,
+    selected_lok: Option<i32>,
 }
 
 #[derive(Debug, Clone)]
 pub enum Message {
     Loaded(SavedData),
-    Remove(Lok),
+    Remove(i32),
     NameInputChanged(String),
     AddressInputChanged(String),
     LokMausNameInputChanged(String),
@@ -47,11 +50,11 @@ pub enum Message {
     SearchInputChanged(String),
     Add,
     CreateLok,
-    Saved(Result<(), ()>),
+    Saved(i32),
     Search,
     Cancel,
-    ShowLok(Lok),
-    Edit(Lok),
+    ShowLok(i32),
+    Edit(i32),
     InputFailure(MessageDialogResult),
     Edited,
 }
@@ -60,7 +63,8 @@ impl Default for State {
     fn default() -> Self {
         State {
             db: Pool::connect_lazy("").unwrap(),
-            loks: Vec::default(),
+            loks_preview: Vec::default(),
+            loks_cache: HashMap::default(),
             name_input: String::default(),
             address_input: String::default(),
             lok_maus_name_input: String::default(),
@@ -69,6 +73,29 @@ impl Default for State {
             search_input: String::default(),
             selected_lok: None,
         }
+    }
+}
+
+impl State {
+    fn get_lok_by_id(&mut self, id: i32) -> Lok {
+        let lok_option = self.loks_cache.get(&id);
+
+        if let Some(lok) = lok_option {
+            lok.clone()
+        }
+        else {
+            let lok = task::block_on(Lok::get_lok_by_id(&self.db, id));
+
+            self.loks_cache.insert(id, lok.clone());
+
+            lok
+        }
+    }
+
+    fn get_selected_lok(&mut self) -> Lok {
+        let id = self.selected_lok.unwrap();
+
+        self.get_lok_by_id(id)
     }
 }
 
@@ -90,7 +117,7 @@ impl Lokbuch {
                         *self = Lokbuch::HomeView(
                             State {
                                 db: state.db.clone(),
-                                loks: state.loks.clone(),
+                                loks_preview: state.loks_preview.clone(),
                                 ..State::default()
                             }
                         );
@@ -106,7 +133,8 @@ impl Lokbuch {
                         *self = Lokbuch::AddView(
                             State {
                                 db: state.db.clone(),
-                                loks: state.loks.clone(),
+                                loks_preview: state.loks_preview.clone(),
+                                loks_cache: state.loks_cache.clone(),
                                 ..State::default()
                             }
                         );
@@ -118,12 +146,13 @@ impl Lokbuch {
 
                     Message::Search => {}
 
-                    Message::ShowLok(lok) => {
+                    Message::ShowLok(id) => {
                         *self = Lokbuch::ShowView(
                             State {
                                 db: state.db.clone(),
-                                loks: state.loks.clone(),
-                                selected_lok: Some(lok),
+                                loks_preview: state.loks_preview.clone(),
+                                loks_cache: state.loks_cache.clone(),
+                                selected_lok: Some(id),
                                 ..State::default()
                             }
                         );
@@ -133,33 +162,37 @@ impl Lokbuch {
                         *self = Lokbuch::HomeView(
                             State {
                                 db: state.db.clone(),
-                                loks: state.loks.clone(),
+                                loks_preview: state.loks_preview.clone(),
+                                loks_cache: state.loks_cache.clone(),
                                 ..State::default()
                             }
                         );
                     }
 
-                    Message::Edit(lok) => {
-                        let lok_clone = lok.clone();
-                        let name_input = lok_clone.name.clone();
-                        let address_input = if let Some(address) = lok_clone.address.clone() {
+                    Message::Edit(id) => {
+                        let lok = state.get_lok_by_id(id);
+
+                        let name_input = lok.name.clone();
+
+                        let address_input = if let Some(address) = lok.address.clone() {
                             address.to_string()
                         } else { String::new() } ;
-                        let lok_maus_name_input = if let Some(lokmaus_name) = lok_clone.lokmaus_name.clone() {
+                        let lok_maus_name_input = if let Some(lokmaus_name) = lok.lokmaus_name.clone() {
                             lokmaus_name
                         } else { String::new() };
-                        let producer_input = if let Some(producer) = lok_clone.producer.clone() {
+                        let producer_input = if let Some(producer) = lok.producer.clone() {
                             producer
                         } else { String::new() };
-                        let management_input = if let Some(management) = lok_clone.management.clone() {
+                        let management_input = if let Some(management) = lok.management.clone() {
                             management
                         } else { String::new() };
 
                         *self = Lokbuch::EditView(
                             State {
                                 db: state.db.clone(),
-                                loks: state.loks.clone(),
-                                selected_lok: Some(lok),
+                                loks_preview: state.loks_preview.clone(),
+                                loks_cache: state.loks_cache.clone(),
+                                selected_lok: Some(id),
                                 name_input,
                                 address_input,
                                 lok_maus_name_input,
@@ -170,14 +203,15 @@ impl Lokbuch {
                         );
                     }
 
-                    Message::Remove(lok) => {
-                        task::block_on(delete_lok(state.db.clone(), lok.clone()));
+                    Message::Remove(id) => {
+                        task::block_on(delete_lok_by_id(state.db.clone(), id));
                         let loks = task::block_on(get_updated_lok_list(state.db.clone()));
 
                         *self = Lokbuch::HomeView(
                             State {
                                 db: state.db.clone(),
-                                loks,
+                                loks_preview: loks,
+                                loks_cache: state.loks_cache.clone(),
                                 ..State::default()
                             }
                         );
@@ -247,22 +281,11 @@ impl Lokbuch {
 
                         let db = state.db.clone();
 
-                        state.loks.push(new_lok.clone());
-                        state.loks.sort();
-
                         state.name_input.clear();
                         state.address_input.clear();
                         state.lok_maus_name_input.clear();
                         state.producer_input.clear();
                         state.management_input.clear();
-
-                        *self = Lokbuch::HomeView(
-                            State {
-                                db: state.db.clone(),
-                                loks: state.loks.clone(),
-                                ..State::default()
-                            }
-                        );
 
                         return Task::perform(crate::add_new_lok(db, new_lok), Message::Saved);
                     }
@@ -270,7 +293,27 @@ impl Lokbuch {
                         *self = Lokbuch::HomeView(
                             State {
                                 db: state.db.clone(),
-                                loks: state.loks.clone(),
+                                loks_preview: state.loks_preview.clone(),
+                                loks_cache: state.loks_cache.clone(),
+                                ..State::default()
+                            }
+                        );
+                    }
+
+                    Message::Saved(id) => {
+                        let lok = state.get_lok_by_id(id);
+                        let preview = lok.clone().as_preview_lok(id);
+
+                        state.loks_cache.insert(id, lok);
+
+                        state.loks_preview.push(preview);
+                        state.loks_preview.sort();
+
+                        *self = Lokbuch::HomeView(
+                            State {
+                                db: state.db.clone(),
+                                loks_preview: state.loks_preview.clone(),
+                                loks_cache: state.loks_cache.clone(),
                                 ..State::default()
                             }
                         );
@@ -335,17 +378,21 @@ impl Lokbuch {
                             state.management_input.clone(),
                         );
 
-                        let old_lok = state.selected_lok.clone().unwrap();
+                        let old_lok_id = state.selected_lok.clone().unwrap();
 
                         let db = state.db.clone();
 
-                        task::block_on(update_lok(db, old_lok, new_lok));
+                        task::block_on(update_lok_by_id(db, old_lok_id, new_lok));
+
+                        state.loks_cache.remove(&old_lok_id);
+
                         let loks = task::block_on(get_updated_lok_list(state.db.clone()));
 
                         *self = Lokbuch::HomeView(
                             State {
                                 db: state.db.clone(),
-                                loks,
+                                loks_preview: loks,
+                                loks_cache: state.loks_cache.clone(),
                                 ..State::default()
                             }
                         );
@@ -354,7 +401,8 @@ impl Lokbuch {
                         *self = Lokbuch::HomeView(
                             State {
                                 db: state.db.clone(),
-                                loks: state.loks.clone(),
+                                loks_preview: state.loks_preview.clone(),
+                                loks_cache: state.loks_cache.clone(),
                                 ..State::default()
                             }
                         );
@@ -580,7 +628,7 @@ impl Lokbuch {
             }
 
             Lokbuch::HomeView(State {
-                                  loks,
+                                  loks_preview: loks,
                                   search_input,
                                   ..
                               }) => {
@@ -630,10 +678,10 @@ impl Lokbuch {
 
                 let loks = keyed_column(
                     loks.iter().map(|item| (0, iced::widget::column!(
-                        button(ui::lok_as_element(item))
+                        button(ui::preview_as_ui_element(item))
                         .style(button::text)
                         .on_press_with(|| {
-                            Message::ShowLok(item.clone())
+                            Message::ShowLok(item.get_id())
                         }),
                         vertical_space()
                         .height(10))
@@ -645,13 +693,9 @@ impl Lokbuch {
                 content.into()
             }
 
-            Lokbuch::ShowView(State {
-                                  selected_lok,
-                                  ..
-                              }) => {
-                let lok = selected_lok.clone().unwrap();
-                let lok_edit = lok.clone();
-                let lok_remove = lok.clone();
+            Lokbuch::ShowView(state) => {
+                let mut state = state.clone();
+                let lok = state.get_selected_lok();
 
                 let header = ui::view_header(format!("{}", lok.name));
 
@@ -705,13 +749,13 @@ impl Lokbuch {
 
                 let edit_button = button(row![ui::font::edit_icon(), text("Bearbeiten").size(ui::TEXT_SIZE)].align_y(Center))
                     .on_press_with(move || {
-                        Message::Edit(lok_edit.clone())
+                        Message::Edit(state.selected_lok.clone().unwrap())
                     })
                     .padding(15);
 
                 let remove_button = button(row![ui::font::delete_icon(), text("Löschen").size(ui::TEXT_SIZE)].align_y(Center))
                     .on_press_with(move || {
-                        Message::Remove(lok_remove.clone())
+                        Message::Remove(state.selected_lok.clone().unwrap())
                     })
                     .style(button::danger)
                     .padding(15);
