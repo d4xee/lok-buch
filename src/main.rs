@@ -5,20 +5,18 @@ mod app;
 use crate::app::{Lokbuch, SavedData};
 use crate::database::lok::Lok;
 use sqlx::{Pool, Sqlite};
+use crate::database::preview_lok::PreviewLok;
 
-
-async fn add_new_lok(db: Pool<Sqlite>, lok: Lok) -> Result<(), ()> {
-    lok.save(&db).await;
-
-    Ok(())
+async fn add_new_lok(db: Pool<Sqlite>, lok: Lok) -> i32 {
+    lok.save(&db).await
 }
 
-async fn delete_lok(db: Pool<Sqlite>, lok: Lok) {
-    lok.delete(&db).await;
+async fn delete_lok_by_id(db: Pool<Sqlite>, id: i32) {
+    Lok::delete_lok_by_id(&db, id).await;
 }
 
-async fn update_lok(db: Pool<Sqlite>, old_lok: Lok, new_lok: Lok) {
-    old_lok.update(&db, new_lok).await;
+async fn update_lok_by_id(db: Pool<Sqlite>, old_lok_id: i32, new_lok: Lok) {
+    Lok::update_lok_by_id(&db, old_lok_id, new_lok).await;
 }
 
 async fn init_database() -> SavedData {
@@ -28,15 +26,15 @@ async fn init_database() -> SavedData {
 
     database::migrate(&db).await;
 
-    let mut loks = database::lok::get_all_loks(&db).await;
+    let mut loks = database::preview_lok::get_all_previews(&db).await;
 
     loks.sort();
 
-    SavedData { db: db.clone(), loks }
+    SavedData { db: db.clone(), loks_preview: loks }
 }
 
-async fn get_updated_lok_list(db: Pool<Sqlite>) -> Vec<Lok> {
-    let mut loks = database::lok::get_all_loks(&db).await;
+async fn get_updated_lok_list(db: Pool<Sqlite>) -> Vec<PreviewLok> {
+    let mut loks = database::preview_lok::get_all_previews(&db).await;
     loks.sort();
 
     loks

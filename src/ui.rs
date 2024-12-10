@@ -1,11 +1,13 @@
-use iced::{Center, Element, Fill};
-use iced::widget::{button, column, container, horizontal_space, row, text, vertical_space, Container};
 use crate::app::Message;
-use crate::database::lok::Lok;
+use crate::database::preview_lok::PreviewLok;
+use iced::widget::{button, column, container, horizontal_space, row, text, vertical_space, Container};
+use iced::{Center, Element, Fill};
 
 const VIEW_NAME_TEXT_SIZE: u16 = 25;
 const VIEW_TITLE_TEXT_SIZE: u16 = 75;
 pub const TEXT_SIZE: u16 = 20;
+
+pub const NO_DATA_AVAILABLE_TEXT: &str = "---";
 
 pub fn view_header<'a>(name: String) -> Element<'a, Message> {
     column!(
@@ -30,20 +32,19 @@ pub fn view_header<'a>(name: String) -> Element<'a, Message> {
         .into()
 }
 
-pub fn lok_as_element(lok: &Lok) -> Container<Message> {
-    let lok_edit = lok.clone();
-    let lok_remove = lok.clone();
+pub fn preview_as_ui_element(preview: &PreviewLok) -> Container<Message> {
+    let preview_id = preview.get_id();
 
     let button_row = row![
         horizontal_space(),
         button(font::edit_icon())
         .on_press_with(move || {
-            Message::Edit(lok_edit.clone())
+            Message::Edit(preview_id)
         })
         .style(button::secondary),
         button(font::delete_icon())
         .on_press_with(move || {
-            Message::Remove(lok_remove.clone())
+            Message::Remove(preview_id)
         })
         .style(button::danger)
     ]
@@ -52,17 +53,17 @@ pub fn lok_as_element(lok: &Lok) -> Container<Message> {
 
     container(row![
         row![
-            text!("{}", lok.get_address_pretty()),
+            text!("{}", preview.get_address_pretty()),
             horizontal_space(),
         ],
 
         row![
-            text!("{}", lok.get_lokmaus_name_pretty()),
+            text!("{}", preview.get_lokmaus_name_pretty()),
             horizontal_space(),
         ],
 
         row![
-            text!("{}", lok.name),
+            text!("{}", preview.get_name_pretty()),
             horizontal_space(),
         ],
 
@@ -75,8 +76,8 @@ pub fn lok_as_element(lok: &Lok) -> Container<Message> {
 }
 
 pub mod font {
-    use iced::{Center, Font};
     use iced::widget::{text, Text};
+    use iced::{Center, Font};
 
     const ICONS: Font = Font::with_name("Iced-Todos-Icons");
 
