@@ -1,10 +1,35 @@
 pub mod lok;
 pub mod preview_lok;
+pub mod sqlite_db;
 
 use sqlx::migrate::MigrateDatabase;
 use sqlx::{Error, Pool, Sqlite, SqlitePool};
 
 const DB_URL: &str = "sqlite://lokbuch.db";
+
+/// Represents an error upon database operation failure.
+#[derive(Debug)]
+pub enum DatabaseError {
+    ConnectionError,
+    GeneralError(String),
+    SpecificError(String),
+}
+
+pub(crate) trait Database {
+    /// Creates the database.
+    /// Does not connect to database.
+    /// Is called before every other method.
+    async fn build(db_url: &str) -> Result<Self, DatabaseError>
+    where
+        Self: Sized;
+
+    /// Connects to database.
+    async fn connect(&mut self) -> Result<Pool<impl sqlx::Database>, DatabaseError>;
+
+    /// Initializes a database.
+    /// Should be only called after a connection was established.
+    async fn init(&self) -> Result<(), DatabaseError>;
+}
 
 pub async fn create_database() {
     if !Sqlite::database_exists(DB_URL).await.unwrap_or(false) {

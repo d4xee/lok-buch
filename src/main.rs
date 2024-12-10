@@ -1,6 +1,8 @@
-mod database;
+pub mod database;
 mod ui;
 mod app;
+
+mod res_man;
 
 use crate::app::{Lokbuch, SavedData};
 use crate::database::lok::Lok;
