@@ -3,11 +3,12 @@ mod ui;
 mod app;
 
 mod res_man;
+mod test;
 
 use crate::app::{Lokbuch, SavedData};
 use crate::database::lok::Lok;
-use sqlx::{Pool, Sqlite};
 use crate::database::preview_lok::PreviewLok;
+use sqlx::{Pool, Sqlite};
 
 async fn add_new_lok(db: Pool<Sqlite>, lok: Lok) -> i32 {
     lok.save(&db).await

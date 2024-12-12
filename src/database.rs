@@ -28,10 +28,6 @@ pub(crate) trait Database {
 
     /// Connects to database.
     async fn connect(&mut self) -> Result<Pool<Self::DRV>, DatabaseError>;
-
-    /// Initializes a database.
-    /// Should be only called after a connection was established.
-    async fn init(&self) -> Result<(), DatabaseError>;
 }
 
 pub async fn create_database() {
