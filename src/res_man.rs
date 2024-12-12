@@ -11,11 +11,11 @@ pub struct LokResourceManager<DB: Database, DRV: Driver> {
     connection: Pool<DRV>,
 }
 
-impl LokResourceManager<SQLiteDB, Sqlite> {
+impl<DB: Database<DRV=DRV>, DRV: Driver> LokResourceManager<DB, DRV> {
     pub async fn build(db_url: &str) -> Result<Self, DatabaseError> {
-        let mut db = SQLiteDB::build(db_url).await?;
+        let mut db = DB::build(db_url).await?;
 
-        let conn = db.connect().await?;
+        let conn: Pool<DRV> = db.connect().await?;
 
         db.init().await?;
 
@@ -30,7 +30,7 @@ mod lok_resource_manager_tests {
 
     #[test]
     fn build_works() {
-        let lrm = task::block_on(LokResourceManager::build("sqlite://test/test.db"));
+        let lrm = task::block_on(LokResourceManager::<SQLiteDB, Sqlite>::build("sqlite://test/test.db"));
 
         assert!(lrm.is_ok());
     }

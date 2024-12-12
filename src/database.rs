@@ -16,6 +16,9 @@ pub enum DatabaseError {
 }
 
 pub(crate) trait Database {
+    /// Type of the driver, that is a database of sqlx
+    type DRV: sqlx::Database;
+
     /// Creates the database.
     /// Does not connect to database.
     /// Is called before every other method.
@@ -24,7 +27,7 @@ pub(crate) trait Database {
         Self: Sized;
 
     /// Connects to database.
-    async fn connect(&mut self) -> Result<Pool<impl sqlx::Database>, DatabaseError>;
+    async fn connect(&mut self) -> Result<Pool<Self::DRV>, DatabaseError>;
 
     /// Initializes a database.
     /// Should be only called after a connection was established.

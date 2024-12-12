@@ -8,6 +8,8 @@ pub struct SQLiteDB {
 }
 
 impl Database for SQLiteDB {
+    type DRV = Sqlite;
+
     async fn build(db_url: &str) -> Result<Self, DatabaseError> {
         if !Sqlite::database_exists(db_url).await.unwrap_or(false) {
             println!("Creating database {}", db_url);
