@@ -1,13 +1,11 @@
-pub mod database;
 mod ui;
 mod app;
-
-mod res_man;
-mod test;
+mod backend;
 
 use crate::app::{Lokbuch, SavedData};
-use crate::database::lok::Lok;
-use crate::database::preview_lok::PreviewLok;
+use crate::backend::database;
+use crate::backend::database::lok::Lok;
+use crate::backend::database::preview_lok::PreviewLok;
 use sqlx::{Pool, Sqlite};
 
 async fn add_new_lok(db: Pool<Sqlite>, lok: Lok) -> i32 {

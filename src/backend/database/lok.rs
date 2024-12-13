@@ -1,9 +1,9 @@
+use crate::database::preview_lok::PreviewLok;
 use crate::ui;
 use futures::join;
 use sqlx::{Pool, Row, Sqlite};
 use std::cmp::Ordering;
 use std::collections::HashMap;
-use crate::database::preview_lok::PreviewLok;
 
 #[derive(Clone, Debug, Eq, Hash)]
 pub struct Lok {
@@ -15,7 +15,7 @@ pub struct Lok {
 }
 
 #[derive(sqlx::FromRow, Clone, Debug, Default)]
-struct RawLokData {
+pub struct RawLokData {
     id: i32,
     name: String,
     address: i32,
@@ -120,7 +120,7 @@ impl Lok {
         }
     }
 
-    fn new_from_raw_lok_data(raw_lok_data: &RawLokData) -> Lok {
+    pub fn new_from_raw_lok_data(raw_lok_data: &RawLokData) -> Lok {
         Lok::new(
             raw_lok_data.name.clone(),
             if raw_lok_data.address < 0 { None } else { Some(raw_lok_data.address) },

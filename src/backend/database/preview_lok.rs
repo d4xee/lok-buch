@@ -1,6 +1,6 @@
-use std::cmp::Ordering;
-use sqlx::{Pool, Sqlite};
 use crate::ui;
+use sqlx::{Pool, Sqlite};
+use std::cmp::Ordering;
 
 #[derive(Clone, Debug, Eq, Hash)]
 pub struct PreviewLok {
@@ -11,7 +11,7 @@ pub struct PreviewLok {
 }
 
 #[derive(sqlx::FromRow)]
-struct PreviewData {
+pub struct PreviewData {
     id: i32,
     address: i32,
     name: String,
@@ -40,7 +40,7 @@ impl PreviewLok {
         }
     }
 
-    fn new_from_raw_preview_data(data: &PreviewData) -> Self {
+    pub fn new_from_raw_preview_data(data: &PreviewData) -> Self {
         PreviewLok::new(
             data.id,
             if data.address < 0 { None } else { Some(data.address) },
