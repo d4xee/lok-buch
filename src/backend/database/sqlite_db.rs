@@ -84,10 +84,9 @@ impl Database for SQLiteDB {
 #[cfg(test)]
 mod sqlite_db_tests {
     use super::*;
-    use crate::test;
+    use crate::backend::test;
     use async_std::task;
     use std::time::Duration;
-
 
     #[test]
     fn build_db_test() {
