@@ -1,12 +1,14 @@
-use std::collections::HashMap;
+use crate::database::lok::Lok;
+use crate::database::preview_lok::PreviewLok;
+use crate::{delete_lok_by_id, get_updated_lok_list, init_database, ui, update_lok_by_id};
 use async_std::task;
+use iced::widget::{button, center, column, container, horizontal_space, keyed_column, row, scrollable, text, text_input, vertical_space};
 use iced::{Center, Element, Fill, Left, Task};
-use iced::widget::{button, center, container, horizontal_space, keyed_column, row, scrollable, text, text_input, vertical_space, column};
 use rfd::MessageDialogResult;
 use sqlx::{Pool, Sqlite};
-use crate::database::lok::Lok;
-use crate::{init_database, ui, update_lok_by_id, get_updated_lok_list, delete_lok_by_id};
-use crate::database::preview_lok::PreviewLok;
+use std::collections::HashMap;
+
+const VERSION: &str = env!("CARGO_PKG_VERSION");
 
 #[derive(Debug)]
 pub enum Lokbuch {
@@ -106,7 +108,7 @@ impl Lokbuch {
     }
 
     pub(crate) fn title(&self) -> String {
-        String::from("LOKBUCH 0.1")
+        format!("Lokbuch v{}", VERSION)
     }
 
     pub(crate) fn update(&mut self, message: Message) -> Task<Message> {
