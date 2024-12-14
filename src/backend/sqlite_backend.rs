@@ -6,9 +6,9 @@ use crate::backend::Backend;
 use sqlx::{Pool, Sqlite};
 
 /// Backend implementation for a SQLite databse
+#[derive(Clone)]
 pub struct SQLiteBackend {
-    database: SQLiteDB,
-    connection: Pool<Sqlite>,
+    database: Pool<Sqlite>,
 }
 
 impl Backend for SQLiteBackend {
@@ -17,7 +17,7 @@ impl Backend for SQLiteBackend {
 
         let conn = db.connect().await?;
 
-        Ok(Self { database: db, connection: conn })
+        Ok(Self { database: conn })
     }
 
     async fn insert(&self, lok: Lok) -> u32 {
@@ -27,36 +27,36 @@ impl Backend for SQLiteBackend {
             .bind(lok.lokmaus_name.clone())
             .bind(lok.producer.clone())
             .bind(lok.management.clone())
-            .execute(&self.connection.clone())
+            .execute(&self.database.clone())
             .await
             .expect("Failed to add Lok to database!");
 
         result.last_insert_rowid() as u32
     }
 
-    async fn get(&self, id: u32) -> Result<Lok, DatabaseError> {
+    async fn get(&self, id: u32) -> Option<Lok> {
         let result = sqlx::query_as("SELECT * FROM loks WHERE id = ? LIMIT 1")
             .bind(id)
-            .fetch_one(&self.connection)
+            .fetch_one(&self.database)
             .await;
 
         match result {
             Ok(raw_lok) => {
-                Ok(Lok::new_from_raw_lok_data(&raw_lok))
+                Some(Lok::new_from_raw_lok_data(&raw_lok))
             }
-            Err(_) => { Err(DatabaseError::SpecificError("Lok not found in database!".to_string())) }
+            Err(_) => { None }
         }
     }
 
-    async fn update(&self, id: u32, new_lok: Lok) {
+    async fn update(&self, id: u32, new_lok: &Lok) {
         let result = sqlx::query("UPDATE loks SET address = ?, name = ?, lokmaus_name = ?, producer = ?, management = ? WHERE id = ?;")
-            .bind(new_lok.address)
-            .bind(new_lok.name)
-            .bind(new_lok.lokmaus_name)
-            .bind(new_lok.producer)
-            .bind(new_lok.management)
+            .bind(new_lok.address.clone())
+            .bind(new_lok.name.clone())
+            .bind(new_lok.lokmaus_name.clone())
+            .bind(new_lok.producer.clone())
+            .bind(new_lok.management.clone())
             .bind(id)
-            .execute(&self.connection)
+            .execute(&self.database)
             .await.unwrap();
 
         println!("updated lok: {:?}", result)
@@ -65,7 +65,7 @@ impl Backend for SQLiteBackend {
     async fn remove(&self, id: u32) {
         let result = sqlx::query("DELETE FROM loks WHERE id = ?")
             .bind(id)
-            .execute(&self.connection)
+            .execute(&self.database)
             .await.unwrap();
 
         println!("Deleted lok: {:?}", result)
@@ -73,7 +73,7 @@ impl Backend for SQLiteBackend {
 
     async fn get_all_previews(&self) -> Vec<PreviewLok> {
         let data = sqlx::query_as("select id, address, name, lokmaus_name from loks")
-            .fetch_all(&self.connection)
+            .fetch_all(&self.database)
             .await
             .unwrap();
 
@@ -129,7 +129,7 @@ mod sqlite_backend_tests {
 
         let id = task::block_on(backend.insert(Lok::new_from_raw_data("TEST".to_string(), 114141, "14TE".to_string(), "Roco".to_string(), "ÖBB".to_string())));
 
-        task::block_on(backend.update(id, Lok::new_from_raw_data("RRRR".to_string(), 100002, "ABCD".to_string(), "KKLE".to_string(), "DB".to_string())))
+        task::block_on(backend.update(id, &Lok::new_from_raw_data("RRRR".to_string(), 100002, "ABCD".to_string(), "KKLE".to_string(), "DB".to_string())))
     }
 
     #[test]
@@ -146,7 +146,6 @@ mod sqlite_backend_tests {
     }
 
     #[test]
-    #[should_panic(expected = "Lok not found in database!")]
     fn remove_lok_works() {
         test::util::remove_test_db(17);
 
@@ -156,7 +155,9 @@ mod sqlite_backend_tests {
 
         task::block_on(backend.remove(id));
 
-        let lok = task::block_on(backend.get(id)).unwrap();
+        let lok = task::block_on(backend.get(id));
+
+        assert_eq!(lok, None)
     }
 
     #[test]
@@ -165,8 +166,8 @@ mod sqlite_backend_tests {
 
         let backend = task::block_on(SQLiteBackend::build("sqlite://test/test18.db")).unwrap();
 
-        let id1 = task::block_on(backend.insert(Lok::new_from_raw_data("TEST".to_string(), 114141, "14TE".to_string(), "Roco".to_string(), "ÖBB".to_string())));
-        let id2 = task::block_on(backend.insert(Lok::new_from_raw_data("TEST1".to_string(), 114141, "14TE".to_string(), "Roco".to_string(), "ÖBB".to_string())));
+        let _id1 = task::block_on(backend.insert(Lok::new_from_raw_data("TEST".to_string(), 114141, "14TE".to_string(), "Roco".to_string(), "ÖBB".to_string())));
+        let _id2 = task::block_on(backend.insert(Lok::new_from_raw_data("TEST1".to_string(), 114141, "14TE".to_string(), "Roco".to_string(), "ÖBB".to_string())));
 
         let mut previews = task::block_on(backend.get_all_previews());
 
