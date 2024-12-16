@@ -1,10 +1,9 @@
 use crate::ui;
-use sqlx::{Pool, Sqlite};
 use std::cmp::Ordering;
 
 #[derive(Clone, Debug, Eq, Hash)]
 pub struct PreviewLok {
-    id: i32,
+    id: u32,
     address: Option<i32>,
     name: Option<String>,
     lokmaus_name: Option<String>,
@@ -18,20 +17,8 @@ pub struct PreviewData {
     lokmaus_name: String,
 }
 
-async fn get_all_previews_data(db: &Pool<Sqlite>) -> Vec<PreviewData> {
-    sqlx::query_as("select id, address, name, lokmaus_name from loks").fetch_all(db).await.unwrap()
-}
-
-pub async fn get_all_previews(db: &Pool<Sqlite>) -> Vec<PreviewLok> {
-    let data = get_all_previews_data(db).await;
-
-    data.iter().map(|raw_preview| {
-        PreviewLok::new_from_raw_preview_data(raw_preview)
-    }).collect()
-}
-
 impl PreviewLok {
-    pub(crate) fn new(id: i32, address: Option<i32>, name: Option<String>, lokmaus_name: Option<String>) -> Self {
+    pub(crate) fn new(id: u32, address: Option<i32>, name: Option<String>, lokmaus_name: Option<String>) -> Self {
         Self {
             id,
             address,
@@ -42,14 +29,14 @@ impl PreviewLok {
 
     pub fn new_from_raw_preview_data(data: &PreviewData) -> Self {
         PreviewLok::new(
-            data.id,
+            data.id as u32,
             if data.address < 0 { None } else { Some(data.address) },
             if data.name.is_empty() { None } else { Some(data.name.clone()) },
             if data.lokmaus_name.is_empty() { None  } else { Some(data.lokmaus_name.clone()) }
         )
     }
 
-    pub fn get_id(&self) -> i32 {
+    pub fn get_id(&self) -> u32 {
         self.id
     }
 

@@ -6,9 +6,17 @@ use crate::backend::Backend;
 use sqlx::{Pool, Sqlite};
 
 /// Backend implementation for a SQLite databse
-#[derive(Clone)]
+#[derive(Clone, Debug)]
 pub struct SQLiteBackend {
     database: Pool<Sqlite>,
+}
+
+impl Default for SQLiteBackend {
+    fn default() -> Self {
+        SQLiteBackend {
+            database: Pool::connect_lazy("").unwrap()
+        }
+    }
 }
 
 impl Backend for SQLiteBackend {

@@ -1,15 +1,16 @@
 use crate::backend::database::lok::Lok;
 use crate::backend::database::preview_lok::PreviewLok;
 use crate::backend::database::DatabaseError;
+use std::fmt::Debug;
 
 pub mod database;
 pub mod resource_manager;
 mod test;
-mod sqlite_backend;
+pub mod sqlite_backend;
 
 /// The backend is responsible for the direct communication with the database.
 /// It encapsulates the concrete SQL statements.
-pub trait Backend: Sized + Clone {
+pub trait Backend: Sized + Clone + Default + Debug {
     async fn build(db_url: &str) -> Result<Self, DatabaseError>;
 
     async fn insert(&self, lok: Lok) -> u32;
