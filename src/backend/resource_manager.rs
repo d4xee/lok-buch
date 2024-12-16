@@ -20,10 +20,13 @@ impl<BE: Backend> LokResourceManager<BE>
     pub async fn build(db_url: &str) -> Result<Self, DatabaseError> {
         let backend = BE::build(db_url).await?;
 
+        let mut preview_cache = backend.get_all_previews().await;
+        preview_cache.sort_unstable();
+
         Ok(LokResourceManager {
             backend: backend.clone(),
             cache: HashMap::new(),
-            preview_cache: backend.get_all_previews().await,
+            preview_cache,
         })
     }
 

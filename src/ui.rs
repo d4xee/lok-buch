@@ -32,7 +32,7 @@ pub fn view_header<'a>(name: String) -> Element<'a, Message> {
         .into()
 }
 
-pub fn preview_as_ui_element(preview: &PreviewLok) -> Container<Message> {
+pub fn preview_as_ui_element<'a>(preview: PreviewLok) -> Container<'a, Message> {
     let preview_id = preview.get_id();
 
     let button_row = row![

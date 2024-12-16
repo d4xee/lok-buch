@@ -9,13 +9,19 @@ use rfd::MessageDialogResult;
 
 const VERSION: &str = env!("CARGO_PKG_VERSION");
 
-pub enum Lokbuch {
-    LoadingView,
-    HomeView(State),
-    AddView(State),
-    EditView(State),
-    ShowView(State),
-    SettingsView(State),
+pub struct Lokbuch {
+    view: View,
+    state: State,
+    lok_resource_manager: LokResourceManager<SQLiteBackend>,
+}
+
+pub enum View {
+    Loading,
+    Home,
+    Add,
+    Edit,
+    Show,
+    Settings,
 }
 
 #[derive(Clone, Debug)]
@@ -25,7 +31,6 @@ pub struct SavedData {
 
 #[derive(Clone)]
 pub struct State {
-    lrm: LokResourceManager<SQLiteBackend>,
     name_input: String,
     address_input: String,
     lok_maus_name_input: String,
@@ -59,7 +64,6 @@ pub enum Message {
 impl Default for State {
     fn default() -> Self {
         State {
-            lrm: LokResourceManager::default(),
             name_input: String::default(),
             address_input: String::default(),
             lok_maus_name_input: String::default(),
@@ -73,7 +77,11 @@ impl Default for State {
 
 impl Lokbuch {
     pub(crate) fn new() -> (Self, Task<Message>) {
-        (Lokbuch::LoadingView,
+        (Lokbuch {
+            view: View::Loading,
+            state: State::default(),
+            lok_resource_manager: LokResourceManager::default(),
+        },
          Task::perform(init_backend(), Message::Loaded))
     }
 
@@ -82,60 +90,45 @@ impl Lokbuch {
     }
 
     pub(crate) fn update(&mut self, message: Message) -> Task<Message> {
-        match self {
-            Lokbuch::LoadingView => {
+        match self.view {
+            View::Loading => {
                 match message {
                     Message::Loaded(saved_data) => {
-                        *self = Lokbuch::HomeView(
-                            State {
-                                lrm: saved_data.lrm.clone(),
-                                ..State::default()
-                            }
-                        );
+                        self.lok_resource_manager = saved_data.lrm.clone();
+                        self.view = View::Home;
                     }
                     _ => {}
                 }
                 Task::none()
             }
 
-            Lokbuch::HomeView(state) | Lokbuch::ShowView(state) => {
+            View::Home | View::Show => {
                 match message {
                     Message::Add => {
-                        *self = Lokbuch::AddView(
-                            State {
-                                lrm: state.lrm.clone(),
-                                ..State::default()
-                            }
-                        );
+                        self.view = View::Add;
                     }
 
                     Message::SearchInputChanged(search_input) => {
-                        state.search_input = search_input;
+                        self.state.search_input = search_input;
                     }
 
                     Message::Search => {}
 
                     Message::ShowLok(id) => {
-                        *self = Lokbuch::ShowView(
-                            State {
-                                lrm: state.lrm.clone(),
-                                selected_lok_id: Some(id),
-                                ..State::default()
-                            }
-                        );
+                        self.state = State {
+                            selected_lok_id: Some(id),
+                            ..State::default()
+                        };
+
+                        self.view = View::Show;
                     }
 
                     Message::Cancel => {
-                        *self = Lokbuch::HomeView(
-                            State {
-                                lrm: state.lrm.clone(),
-                                ..State::default()
-                            }
-                        );
+                        self.view = View::Home;
                     }
 
                     Message::Edit(id) => {
-                        let lok = task::block_on(state.lrm.get_lok(id)).expect("Lok does not exist!"); // TODO async edit
+                        let lok = task::block_on(self.lok_resource_manager.get_lok(id)).expect("Lok does not exist!"); // TODO async edit
 
                         let name_input = lok.name.clone();
 
@@ -152,9 +145,7 @@ impl Lokbuch {
                             management
                         } else { String::new() };
 
-                        *self = Lokbuch::EditView(
-                            State {
-                                lrm: state.lrm.clone(),
+                        self.state = State {
                                 selected_lok_id: Some(id),
                                 name_input,
                                 address_input,
@@ -162,19 +153,15 @@ impl Lokbuch {
                                 producer_input,
                                 management_input,
                                 ..State::default()
-                            }
-                        );
+                        };
+
+                        self.view = View::Edit;
                     }
 
                     Message::Remove(id) => {
-                        task::block_on(state.lrm.remove_lok(id)); // TODO async remove
+                        task::block_on(self.lok_resource_manager.remove_lok(id)); // TODO async remove
 
-                        *self = Lokbuch::HomeView(
-                            State {
-                                lrm: state.lrm.clone(),
-                                ..State::default()
-                            }
-                        );
+                        self.view = View::Home;
                     }
 
                     _ => {}
@@ -182,27 +169,27 @@ impl Lokbuch {
                 Task::none()
             }
 
-            Lokbuch::AddView(state) => {
+            View::Add => {
                 match message {
                     Message::NameInputChanged(name) => {
-                        state.name_input = name;
+                        self.state.name_input = name;
                     }
                     Message::AddressInputChanged(address) => {
-                        state.address_input = address;
+                        self.state.address_input = address;
                     }
                     Message::LokMausNameInputChanged(name) => {
-                        state.lok_maus_name_input = name;
+                        self.state.lok_maus_name_input = name;
                     }
                     Message::ProducerInputChanged(producer) => {
-                        state.producer_input = producer;
+                        self.state.producer_input = producer;
                     }
                     Message::ManagementInputChanged(management) => {
-                        state.management_input = management;
+                        self.state.management_input = management;
                     }
                     Message::CreateLok => {
                         println!("Create Lok: Speichern pressed");
 
-                        if state.name_input.is_empty() || state.address_input.is_empty() || state.lok_maus_name_input.is_empty() {
+                        if self.state.name_input.is_empty() || self.state.address_input.is_empty() || self.state.lok_maus_name_input.is_empty() {
                             let res = rfd::AsyncMessageDialog::new()
                                 .set_title("Eingabefehler")
                                 .set_description("Adresse, Bezeichnung und LOKmaus-Anzeigename dürfen nicht leer sein!")
@@ -211,7 +198,7 @@ impl Lokbuch {
                             return Task::perform(res.show(), Message::InputFailure);
                         }
 
-                        let is_num = state.address_input.clone().parse::<i32>().is_ok();
+                        let is_num = self.state.address_input.clone().parse::<i32>().is_ok();
 
                         if !is_num {
                             let res = rfd::AsyncMessageDialog::new()
@@ -222,7 +209,7 @@ impl Lokbuch {
                             return Task::perform(res.show(), Message::InputFailure);
                         }
 
-                        if state.lok_maus_name_input.len() > 5 {
+                        if self.state.lok_maus_name_input.len() > 5 {
                             let res = rfd::AsyncMessageDialog::new()
                                 .set_title("Eingabefehler")
                                 .set_description("Der LOKmaus-Anzeigename darf nicht länger als 5 Zeichen sein!")
@@ -232,62 +219,54 @@ impl Lokbuch {
                         }
 
                         let new_lok = Lok::new_from_raw_data(
-                            state.name_input.clone(),
-                            state.address_input.clone().parse::<i32>().unwrap(),
-                            state.lok_maus_name_input.clone().to_string().to_ascii_uppercase(),
-                            state.producer_input.clone(),
-                            state.management_input.clone(),
+                            self.state.name_input.clone(),
+                            self.state.address_input.clone().parse::<i32>().unwrap(),
+                            self.state.lok_maus_name_input.clone().to_string().to_ascii_uppercase(),
+                            self.state.producer_input.clone(),
+                            self.state.management_input.clone(),
                         );
 
-                        state.name_input.clear();
-                        state.address_input.clear();
-                        state.lok_maus_name_input.clear();
-                        state.producer_input.clear();
-                        state.management_input.clear();
+                        self.state.name_input.clear();
+                        self.state.address_input.clear();
+                        self.state.lok_maus_name_input.clear();
+                        self.state.producer_input.clear();
+                        self.state.management_input.clear();
 
-                        return Task::perform(state.lrm.add_lok(new_lok.clone()), Message::Saved);
+                        task::block_on(self.lok_resource_manager.add_lok(new_lok.clone()));
+
+                        self.view = View::Home;
                     }
                     Message::Cancel => {
-                        *self = Lokbuch::HomeView(
-                            State {
-                                lrm: state.lrm.clone(),
-                                ..State::default()
-                            }
-                        );
+                        self.view = View::Home;
                     }
 
                     Message::Saved(id) => {
-                        *self = Lokbuch::HomeView(
-                            State {
-                                lrm: state.lrm.clone(),
-                                ..State::default()
-                            }
-                        );
+                        self.view = View::Home;
                     }
                     _ => {}
                 }
                 Task::none()
             }
 
-            Lokbuch::EditView(state) => {
+            View::Edit => {
                 match message {
                     Message::NameInputChanged(name) => {
-                        state.name_input = name;
+                        self.state.name_input = name;
                     }
                     Message::AddressInputChanged(address) => {
-                        state.address_input = address;
+                        self.state.address_input = address;
                     }
                     Message::LokMausNameInputChanged(name) => {
-                        state.lok_maus_name_input = name;
+                        self.state.lok_maus_name_input = name;
                     }
                     Message::ProducerInputChanged(producer) => {
-                        state.producer_input = producer;
+                        self.state.producer_input = producer;
                     }
                     Message::ManagementInputChanged(management) => {
-                        state.management_input = management;
+                        self.state.management_input = management;
                     }
                     Message::Edited => {
-                        if state.name_input.is_empty() || state.address_input.is_empty() || state.lok_maus_name_input.is_empty() {
+                        if self.state.name_input.is_empty() || self.state.address_input.is_empty() || self.state.lok_maus_name_input.is_empty() {
                             let res = rfd::AsyncMessageDialog::new()
                                 .set_title("Eingabefehler")
                                 .set_description("Adresse, Bezeichnung und LOKmaus-Anzeigename dürfen nicht leer sein!")
@@ -296,7 +275,7 @@ impl Lokbuch {
                             return Task::perform(res.show(), Message::InputFailure);
                         }
 
-                        let is_num = state.address_input.clone().parse::<i32>().is_ok();
+                        let is_num = self.state.address_input.clone().parse::<i32>().is_ok();
 
                         if !is_num {
                             let res = rfd::AsyncMessageDialog::new()
@@ -307,7 +286,7 @@ impl Lokbuch {
                             return Task::perform(res.show(), Message::InputFailure);
                         }
 
-                        if state.lok_maus_name_input.len() > 5 {
+                        if self.state.lok_maus_name_input.len() > 5 {
                             let res = rfd::AsyncMessageDialog::new()
                                 .set_title("Eingabefehler")
                                 .set_description("Der LOKmaus-Anzeigename darf nicht länger als 5 Zeichen sein!")
@@ -317,55 +296,38 @@ impl Lokbuch {
                         }
 
                         let new_lok = Lok::new_from_raw_data(
-                            state.name_input.clone(),
-                            state.address_input.clone().parse::<i32>().unwrap(),
-                            state.lok_maus_name_input.clone().to_string().to_ascii_uppercase(),
-                            state.producer_input.clone(),
-                            state.management_input.clone(),
+                            self.state.name_input.clone(),
+                            self.state.address_input.clone().parse::<i32>().unwrap(),
+                            self.state.lok_maus_name_input.clone().to_string().to_ascii_uppercase(),
+                            self.state.producer_input.clone(),
+                            self.state.management_input.clone(),
                         );
 
-                        let old_lok_id = state.selected_lok_id.clone().unwrap();
+                        let old_lok_id = self.state.selected_lok_id.clone().unwrap();
 
-                        task::block_on(state.lrm.update_lok(old_lok_id, new_lok));
+                        task::block_on(self.lok_resource_manager.update_lok(old_lok_id, new_lok));
 
-                        *self = Lokbuch::HomeView(
-                            State {
-                                lrm: state.lrm.clone(),
-                                ..State::default()
-                            }
-                        );
+                        self.view = View::Home;
                     }
                     Message::Cancel => {
-                        *self = Lokbuch::HomeView(
-                            State {
-                                lrm: state.lrm.clone(),
-                                ..State::default()
-                            }
-                        );
+                        self.view = View::Home;
                     }
                     _ => {}
                 }
                 Task::none()
             }
 
-            Lokbuch::SettingsView(_) => { Task::none() }
+            View::Settings => { Task::none() }
         }
     }
 
     pub(crate) fn view(&self) -> Element<'_, Message> {
-        match self {
-            Lokbuch::LoadingView => {
+        match self.view {
+            View::Loading => {
                 center(text("Loading...").width(Fill).align_x(Center).size(50)).into()
             }
 
-            Lokbuch::AddView(State {
-                                 name_input,
-                                 address_input,
-                                 lok_maus_name_input,
-                                 producer_input,
-                                 management_input,
-                                 ..
-                             }) => {
+            View::Add => {
                 let header = ui::view_header(String::from("Hinzufügen"));
 
                 let upper_row = row![
@@ -374,7 +336,7 @@ impl Lokbuch {
                     .size(ui::TEXT_SIZE)
                     .align_x(Left),
 
-                    text_input("Adresse", address_input)
+                    text_input("Adresse", self.state.address_input.as_str())
                     .id("new-lok-address")
                     .on_input(Message::AddressInputChanged)
                     .padding(15)
@@ -386,7 +348,7 @@ impl Lokbuch {
                     .size(ui::TEXT_SIZE)
                     .align_x(Left),
 
-                    text_input("LOKmaus-Name", lok_maus_name_input)
+                    text_input("LOKmaus-Name", self.state.lok_maus_name_input.as_str())
                     .id("new-lok-short-name")
                     .on_input(Message::LokMausNameInputChanged)
                     .padding(15)
@@ -401,7 +363,7 @@ impl Lokbuch {
                     .size(ui::TEXT_SIZE)
                     .align_x(Left),
 
-                    text_input("Bezeichnung", name_input)
+                    text_input("Bezeichnung", self.state.name_input.as_str())
                     .id("new-lok-name")
                     .on_input(Message::NameInputChanged)
                     .padding(15)
@@ -420,7 +382,7 @@ impl Lokbuch {
                     .size(ui::TEXT_SIZE)
                     .align_x(Left),
 
-                    text_input("Hersteller", producer_input)
+                    text_input("Hersteller", self.state.producer_input.as_str())
                     .id("new-lok-producer")
                     .on_input(Message::ProducerInputChanged)
                     .padding(15)
@@ -432,7 +394,7 @@ impl Lokbuch {
                     .size(ui::TEXT_SIZE)
                     .align_x(Left),
 
-                    text_input("Bahnverwaltung", management_input)
+                    text_input("Bahnverwaltung", self.state.management_input.as_str())
                     .id("new-lok-management")
                     .on_input(Message::ManagementInputChanged)
                     .padding(15)
@@ -452,14 +414,7 @@ impl Lokbuch {
                 iced::widget::column![header, column![upper_row, vertical_space(), center_row, vertical_space(), lower_row], center(row![horizontal_space(),add_button, horizontal_space(), cancel_button, horizontal_space(),])].width(Fill).into()
             }
 
-            Lokbuch::EditView(State {
-                                  name_input,
-                                  address_input,
-                                  lok_maus_name_input,
-                                  producer_input,
-                                  management_input,
-                                  ..
-                              }) => {
+            View::Edit => {
                 let header = ui::view_header(String::from("Bearbeiten"));
 
                 let upper_row = row![
@@ -468,7 +423,7 @@ impl Lokbuch {
                     .size(ui::TEXT_SIZE)
                     .align_x(Left),
 
-                    text_input("Adresse", address_input)
+                    text_input("Adresse", self.state.address_input.as_str())
                     .id("new-lok-address")
                     .on_input(Message::AddressInputChanged)
                     .padding(15)
@@ -480,7 +435,7 @@ impl Lokbuch {
                     .size(ui::TEXT_SIZE)
                     .align_x(Left),
 
-                    text_input("LOKmaus-Name", lok_maus_name_input)
+                    text_input("LOKmaus-Name", self.state.lok_maus_name_input.as_str())
                     .id("new-lok-short-name")
                     .on_input(Message::LokMausNameInputChanged)
                     .padding(15)
@@ -495,7 +450,7 @@ impl Lokbuch {
                     .size(ui::TEXT_SIZE)
                     .align_x(Left),
 
-                    text_input("Bezeichnung", name_input)
+                    text_input("Bezeichnung", self.state.name_input.as_str())
                     .id("new-lok-name")
                     .on_input(Message::NameInputChanged)
                     .padding(15)
@@ -514,7 +469,7 @@ impl Lokbuch {
                     .size(ui::TEXT_SIZE)
                     .align_x(Left),
 
-                    text_input("Hersteller", producer_input)
+                    text_input("Hersteller", self.state.producer_input.as_str())
                     .id("new-lok-producer")
                     .on_input(Message::ProducerInputChanged)
                     .padding(15)
@@ -526,7 +481,7 @@ impl Lokbuch {
                     .size(ui::TEXT_SIZE)
                     .align_x(Left),
 
-                    text_input("Bahnverwaltung", management_input)
+                    text_input("Bahnverwaltung", self.state.management_input.as_str())
                     .id("new-lok-management")
                     .on_input(Message::ManagementInputChanged)
                     .padding(15)
@@ -563,17 +518,13 @@ impl Lokbuch {
                     )].width(Fill).into()
             }
 
-            Lokbuch::HomeView(State {
-                                  lrm,
-                                  search_input,
-                                  ..
-                              }) => {
-                let num_of_loks = lrm.number_of_loks();
-                let previews = lrm.get_all_previews();
+            View::Home => {
+                let num_of_loks = self.lok_resource_manager.number_of_loks();
+                let mut previews = self.lok_resource_manager.get_all_previews().clone();
 
                 let header = ui::view_header(format!("{} Loks vorhanden", num_of_loks));
 
-                let input_search = text_input("Suchen...", search_input)
+                let input_search = text_input("Suchen...", self.state.search_input.as_str())
                     .id("lok-search")
                     .on_input(Message::SearchInputChanged)
                     .padding(15)
@@ -614,15 +565,18 @@ impl Lokbuch {
                 ];
 
                 let loks = keyed_column(
-                    previews.clone().iter().map(|item| (0, iced::widget::column!(
-                        button(ui::preview_as_ui_element(item))
+                    previews.into_iter().map(move |item| {
+                        let preview = item.clone();
+                        (0, iced::widget::column!(
+                        button(ui::preview_as_ui_element(preview.clone()))
                         .style(button::text)
-                        .on_press_with(|| {
-                            Message::ShowLok(item.get_id())
+                        .on_press_with(move || {
+                            Message::ShowLok(item.clone().get_id())
                         }),
                         vertical_space()
                         .height(10))
-                        .into()))
+                            .into())
+                    })
                 ).width(Fill);
 
                 let content = iced::widget::column![header, row![input_search, search_button], add_button, text_row, scrollable(container(loks))].align_x(Center).spacing(20).width(Fill);
@@ -630,9 +584,9 @@ impl Lokbuch {
                 content.into()
             }
 
-            Lokbuch::ShowView(state) => {
-                let mut state = state.clone();
-                let lok = task::block_on(state.lrm.get_lok(state.selected_lok_id.unwrap())).expect("lok not found"); // TODO async show
+            View::Show => {
+                let mut lrm = self.lok_resource_manager.clone();
+                let lok = task::block_on(lrm.get_lok(self.state.selected_lok_id.unwrap())).expect("lok not found"); // TODO async show
 
                 let header = ui::view_header(format!("{}", lok.name));
 
@@ -686,13 +640,13 @@ impl Lokbuch {
 
                 let edit_button = button(row![ui::font::edit_icon(), text("Bearbeiten").size(ui::TEXT_SIZE)].align_y(Center))
                     .on_press_with(move || {
-                        Message::Edit(state.selected_lok_id.clone().unwrap())
+                        Message::Edit(self.state.selected_lok_id.clone().unwrap())
                     })
                     .padding(15);
 
                 let remove_button = button(row![ui::font::delete_icon(), text("Löschen").size(ui::TEXT_SIZE)].align_y(Center))
                     .on_press_with(move || {
-                        Message::Remove(state.selected_lok_id.clone().unwrap())
+                        Message::Remove(self.state.selected_lok_id.clone().unwrap())
                     })
                     .style(button::danger)
                     .padding(15);
@@ -717,7 +671,7 @@ impl Lokbuch {
                     ])].width(Fill).into()
             }
 
-            Lokbuch::SettingsView(_) => { text("settings").into() }
+            View::Settings => { text("settings").into() }
         }
     }
 }
