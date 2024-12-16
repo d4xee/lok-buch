@@ -3,8 +3,7 @@ use crate::database::lok::Lok;
 use crate::database::preview_lok::PreviewLok;
 use crate::database::DatabaseError;
 use std::collections::HashMap;
-
-const DB_URL: &str = "sqlite://lokbuch.db";
+use std::fmt::{Debug, Formatter};
 
 /// The LokResourceManager is responsible for direct interaction with the data.
 /// Manages the database, the cache and the preview cache.
@@ -17,7 +16,7 @@ pub struct LokResourceManager<BE: Backend> {
 
 impl<BE: Backend> LokResourceManager<BE>
 {
-    /// Builds a LokResourceManager (LRM) on a certain backend.
+    /// Builds a LokResourceManager (LRM) for a certain backend.
     pub async fn build(db_url: &str) -> Result<Self, DatabaseError> {
         let backend = BE::build(db_url).await?;
 
@@ -34,7 +33,7 @@ impl<BE: Backend> LokResourceManager<BE>
         let id = self.backend.insert(lok.clone()).await;
 
         self.cache.insert(id, lok.clone());
-        self.preview_cache.push(lok.as_preview_lok(id as i32));
+        self.preview_cache.push(lok.as_preview_lok(id));
         self.preview_cache.sort();
 
         id
@@ -86,7 +85,7 @@ impl<BE: Backend> LokResourceManager<BE>
         if let Some(index) = index {
             let _ = self.preview_cache.remove(index as usize);
 
-            self.preview_cache.push(new_lok.clone().as_preview_lok(id as i32));
+            self.preview_cache.push(new_lok.clone().as_preview_lok(id));
             self.preview_cache.sort();
         }
 
@@ -103,13 +102,39 @@ impl<BE: Backend> LokResourceManager<BE>
     fn find_preview_index(&self, id: u32) -> Option<u32> {
         let mut index = 0;
         for preview in self.preview_cache.iter() {
-            if preview.get_id() == (id as i32) {
+            if preview.get_id() == id {
                 return Some(index);
             }
             index += 1;
         }
 
         None
+    }
+
+    /// Returns the number of saved loks.
+    pub fn number_of_loks(&self) -> u32 {
+        self.preview_cache.len() as u32
+    }
+}
+
+impl<BE: Backend> Default for LokResourceManager<BE> {
+    fn default() -> Self {
+        LokResourceManager {
+            backend: BE::default(),
+            cache: HashMap::default(),
+            preview_cache: Vec::default(),
+        }
+    }
+}
+
+
+impl<BE: Backend> Debug for LokResourceManager<BE> {
+    fn fmt(&self, f: &mut Formatter<'_>) -> std::fmt::Result {
+        f.debug_struct("LokResourceManager")
+            .field("backend", &self.backend)
+            .field("cache", &self.cache)
+            .field("preview_cache", &self.preview_cache)
+            .finish()
     }
 }
 
