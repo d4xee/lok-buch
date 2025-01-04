@@ -5,7 +5,7 @@ use crate::backend::database::{Database, DatabaseError};
 use crate::backend::Backend;
 use sqlx::{Pool, Sqlite};
 
-/// Backend implementation for a SQLite databse
+/// Backend implementation for a SQLite database
 #[derive(Clone, Debug)]
 pub struct SQLiteBackend {
     database: Pool<Sqlite>,
