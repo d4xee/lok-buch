@@ -61,6 +61,20 @@ pub enum Message {
     Edited,
 }
 
+impl State {
+    /// Clears all internal state variables.
+    /// These are usually the user inputs.
+    fn clear(&mut self) {
+        self.name_input.clear();
+        self.address_input.clear();
+        self.lok_maus_name_input.clear();
+        self.producer_input.clear();
+        self.management_input.clear();
+        self.search_input.clear();
+        self.selected_lok_id = None;
+    }
+}
+
 impl Default for State {
     fn default() -> Self {
         State {
@@ -146,13 +160,13 @@ impl Lokbuch {
                         } else { String::new() };
 
                         self.state = State {
-                                selected_lok_id: Some(id),
-                                name_input,
-                                address_input,
-                                lok_maus_name_input,
-                                producer_input,
-                                management_input,
-                                ..State::default()
+                            selected_lok_id: Some(id),
+                            name_input,
+                            address_input,
+                            lok_maus_name_input,
+                            producer_input,
+                            management_input,
+                            ..State::default()
                         };
 
                         self.view = View::Edit;
@@ -226,11 +240,7 @@ impl Lokbuch {
                             self.state.management_input.clone(),
                         );
 
-                        self.state.name_input.clear();
-                        self.state.address_input.clear();
-                        self.state.lok_maus_name_input.clear();
-                        self.state.producer_input.clear();
-                        self.state.management_input.clear();
+                        self.state.clear();
 
                         task::block_on(self.lok_resource_manager.add_lok(new_lok.clone()));
 
@@ -307,9 +317,11 @@ impl Lokbuch {
 
                         task::block_on(self.lok_resource_manager.update_lok(old_lok_id, new_lok));
 
+                        self.state.clear();
                         self.view = View::Home;
                     }
                     Message::Cancel => {
+                        self.state.clear();
                         self.view = View::Home;
                     }
                     _ => {}

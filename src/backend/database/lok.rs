@@ -1,8 +1,7 @@
 use crate::database::preview_lok::PreviewLok;
 use crate::ui;
-use sqlx::Row;
 
-#[derive(Clone, Debug, Hash)]
+#[derive(Clone, Debug, Hash, Ord, PartialOrd, Eq, PartialEq)]
 pub struct Lok {
     pub name: String,
     pub address: Option<i32>,
