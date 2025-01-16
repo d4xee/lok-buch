@@ -3,8 +3,8 @@ use crate::backend::sqlite_backend::SQLiteBackend;
 use crate::database::lok::Lok;
 use crate::{init_backend, ui};
 use async_std::task;
-use iced::widget::{button, center, column, container, horizontal_space, image, keyed_column, row, scrollable, text, text_input, vertical_space};
-use iced::{Center, Element, Fill, Left, Task};
+use iced::widget::{button, center, checkbox, column, container, horizontal_space, image, keyed_column, row, scrollable, text, text_input, vertical_space};
+use iced::{Center, ContentFit, Element, Fill, Left, Task};
 use rfd::MessageDialogResult;
 
 const VERSION: &str = env!("CARGO_PKG_VERSION");
@@ -51,6 +51,7 @@ pub enum Message {
     LokMausNameInputChanged(String),
     ProducerInputChanged(String),
     ManagementInputChanged(String),
+    HasDecoderInputChanged(bool),
     SearchInputChanged(String),
     Add,
     AddNewLok,
@@ -126,6 +127,7 @@ impl Lokbuch {
                 match message {
                     Message::Add => {
                         self.view = View::Add;
+                        return text_input::focus("new-lok-name");
                     }
 
                     Message::SearchInputChanged(search_input) => {
@@ -176,6 +178,7 @@ impl Lokbuch {
                         };
 
                         self.view = View::Edit;
+                        return text_input::focus("new-lok-name");
                     }
 
                     Message::Remove(id) => {
@@ -392,7 +395,6 @@ impl Lokbuch {
 
                 iced::widget::column![
                     header,
-                    image("res/images/img.png").height(200).width(200),
                     row![
                         horizontal_space(),
                         left_column,
@@ -432,6 +434,9 @@ impl Lokbuch {
             }
             Message::ManagementInputChanged(management) => {
                 self.state.management_input = management;
+            }
+            Message::HasDecoderInputChanged(_) => {
+                self.state.has_decoder_input = !self.state.has_decoder_input;
             }
             _ => {}
         }
@@ -503,6 +508,39 @@ impl Lokbuch {
         let header = ui::view_header(header_text);
 
         let upper_row = row![
+            button(image("res/images/blue.png").width(400).content_fit(ContentFit::Cover)).style(button::text),
+            column![
+                column!(
+                text("Bezeichnung")
+                    .size(ui::TEXT_SIZE)
+                    .align_x(Left),
+
+                text_input("Bezeichnung", self.state.name_input.as_str())
+                    .id("new-lok-name")
+                    .on_input(Message::NameInputChanged)
+                    .padding(15)
+                    .size(ui::TEXT_SIZE)
+                    .align_x(Left),
+                ),
+                vertical_space(),
+
+                column!(
+                text("Analog/Digital")
+                    .size(ui::TEXT_SIZE)
+                    .align_x(Left),
+
+                checkbox("Analog", !self.state.has_decoder_input)
+                    .on_toggle(Message::HasDecoderInputChanged)
+                    .size(ui::TEXT_SIZE),
+                checkbox("Digital", self.state.has_decoder_input)
+                    .on_toggle(Message::HasDecoderInputChanged)
+                    .size(ui::TEXT_SIZE),
+            ),
+                vertical_space(),
+            ]
+        ].spacing(20).padding(20);
+
+        let center_row = row![
                     column!(
                         text("Adresse")
                     .size(ui::TEXT_SIZE)
@@ -527,26 +565,7 @@ impl Lokbuch {
                     .size(ui::TEXT_SIZE)
                     .align_x(Left),
                     ]
-                ].spacing(10);
-
-        let center_row = row![
-                    column!(
-                        text("Bezeichnung")
-                    .size(ui::TEXT_SIZE)
-                    .align_x(Left),
-
-                    text_input("Bezeichnung", self.state.name_input.as_str())
-                    .id("new-lok-name")
-                    .on_input(Message::NameInputChanged)
-                    .padding(15)
-                    .size(ui::TEXT_SIZE)
-                    .align_x(Left),
-                    ),
-                    column![
-                        horizontal_space(),
-                        horizontal_space()
-                    ]
-                ].spacing(10);
+                ].spacing(20).padding(20);
 
         let lower_row = row![
                     column![
@@ -573,7 +592,7 @@ impl Lokbuch {
                     .size(ui::TEXT_SIZE)
                     .align_x(Left),
                     )
-                ].spacing(10);
+                ].spacing(20).padding(20);
 
         let add_button = button(text("Speichern").size(ui::TEXT_SIZE))
             .on_press(message_on_finish)
@@ -586,13 +605,18 @@ impl Lokbuch {
         iced::widget::column![
                     header,
                     column![
-                        upper_row,
-                        vertical_space(),
+                        column![
+                    upper_row,
+                ],
+                        column![
+                    vertical_space(),
                         center_row,
                         vertical_space(),
-                        lower_row
-                    ],
-                    center(
+                        lower_row,
+                    vertical_space()
+                ]
+                    ].height(Fill),
+
                         row![
                             horizontal_space(),
                             add_button,
@@ -600,6 +624,6 @@ impl Lokbuch {
                             cancel_button,
                             horizontal_space(),
                         ]
-                    )].width(Fill).into()
+                    ].width(Fill).into()
     }
 }
