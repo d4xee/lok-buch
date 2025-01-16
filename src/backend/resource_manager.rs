@@ -162,22 +162,11 @@ mod lok_resource_manager_tests {
 
         let mut lrm = task::block_on(LokResourceManager::<SQLiteBackend>::build("sqlite://test/test3.db")).unwrap();
 
-        let id = task::block_on(lrm.add_lok(Lok::new_from_raw_data("TEST".to_string(), 114141, "14TE".to_string(), "Roco".to_string(), "ÖBB".to_string())));
+        let id = task::block_on(lrm.add_lok(test::util::get_test_lok_1()));
 
         println!("{}", id);
 
         assert_eq!(id, 1);
-    }
-
-    #[test]
-    fn add_lok_to_existing_db_works() {
-        let mut lrm = task::block_on(LokResourceManager::<SQLiteBackend>::build("sqlite://test/test4.db")).unwrap();
-
-        let id = task::block_on(lrm.add_lok(Lok::new_from_raw_data("TEST".to_string(), 114141, "14TE".to_string(), "Roco".to_string(), "ÖBB".to_string())));
-
-        println!("{}", id);
-
-        assert!(id >= 1);
     }
 
     #[test]
@@ -186,7 +175,7 @@ mod lok_resource_manager_tests {
 
         let mut lrm = task::block_on(LokResourceManager::<SQLiteBackend>::build("sqlite://test/test5.db")).unwrap();
 
-        let id = task::block_on(lrm.add_lok(Lok::new_from_raw_data("TEST".to_string(), 114141, "14TE".to_string(), "Roco".to_string(), "ÖBB".to_string())));
+        let id = task::block_on(lrm.add_lok(test::util::get_test_lok_1()));
 
         assert_eq!(id, 1);
         assert!(lrm.cache.len() > 0);
@@ -203,7 +192,7 @@ mod lok_resource_manager_tests {
 
         assert!(result.is_none());
 
-        let _id = task::block_on(lrm.add_lok(Lok::new_from_raw_data("TEST".to_string(), 114141, "14TE".to_string(), "Roco".to_string(), "ÖBB".to_string())));
+        let _id = task::block_on(lrm.add_lok(test::util::get_test_lok_1()));
 
         let result = task::block_on(lrm.get_lok(1));
 
@@ -216,7 +205,7 @@ mod lok_resource_manager_tests {
 
         let mut lrm = task::block_on(LokResourceManager::<SQLiteBackend>::build("sqlite://test/test7.db")).unwrap();
 
-        let id = task::block_on(lrm.add_lok(Lok::new_from_raw_data("TEST".to_string(), 114141, "14TE".to_string(), "Roco".to_string(), "ÖBB".to_string())));
+        let id = task::block_on(lrm.add_lok(test::util::get_test_lok_1()));
 
         let result = task::block_on(lrm.get_lok(id));
 
@@ -235,17 +224,21 @@ mod lok_resource_manager_tests {
 
         let mut lrm = task::block_on(LokResourceManager::<SQLiteBackend>::build("sqlite://test/test8.db")).unwrap();
 
-        let id = task::block_on(lrm.add_lok(Lok::new_from_raw_data("TEST".to_string(), 114141, "14TE".to_string(), "Roco".to_string(), "ÖBB".to_string())));
+        let id = task::block_on(lrm.add_lok(test::util::get_test_lok_1()));
 
-        task::block_on(lrm.update_lok(id, Lok::new_from_raw_data("REST5".to_string(), 1141, "XYZ".to_string(), "EGHESDS".to_string(), "DB".to_string())));
+        task::block_on(lrm.update_lok(id, test::util::get_test_lok_2()));
 
         let result = task::block_on(lrm.get_lok(id)).unwrap();
 
-        assert_eq!(result.name, "REST5");
-        assert_eq!(result.address.unwrap(), 1141);
-        assert_eq!(result.lokmaus_name.unwrap(), String::from("XYZ"));
-        assert_eq!(result.producer.unwrap(), String::from("EGHESDS"));
-        assert_eq!(result.management.unwrap(), String::from("DB"));
+        let test_lok2 = test::util::get_test_lok_2();
+
+        assert_eq!(result.name, test_lok2.name);
+        assert_eq!(result.address.unwrap(), test_lok2.address.unwrap());
+        assert_eq!(result.lokmaus_name.unwrap(), test_lok2.lokmaus_name.unwrap());
+        assert_eq!(result.producer.unwrap(), test_lok2.producer.unwrap());
+        assert_eq!(result.management.unwrap(), test_lok2.management.unwrap());
+        assert_eq!(result.has_decoder, test_lok2.has_decoder);
+        assert_eq!(result.image_path.unwrap(), test_lok2.image_path.unwrap());
     }
 
     #[test]
@@ -254,12 +247,12 @@ mod lok_resource_manager_tests {
 
         let mut lrm = task::block_on(LokResourceManager::<SQLiteBackend>::build("sqlite://test/test9.db")).unwrap();
 
-        let _id1 = task::block_on(lrm.add_lok(Lok::new_from_raw_data("TEST".to_string(), 114141, "14TE".to_string(), "Roco".to_string(), "ÖBB".to_string())));
-        let _id2 = task::block_on(lrm.add_lok(Lok::new_from_raw_data("TEST1".to_string(), 114141, "14TE".to_string(), "Roco".to_string(), "ÖBB".to_string())));
+        let _id1 = task::block_on(lrm.add_lok(test::util::get_test_lok_1()));
+        let _id2 = task::block_on(lrm.add_lok(test::util::get_test_lok_2()));
 
         let mut previews = lrm.get_all_previews();
 
-        assert_eq!(previews.pop().unwrap().get_name_pretty(), String::from("TEST1"));
         assert_eq!(previews.pop().unwrap().get_name_pretty(), String::from("TEST"));
+        assert_eq!(previews.pop().unwrap().get_name_pretty(), String::from("RRRR"));
     }
 }

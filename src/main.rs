@@ -7,7 +7,7 @@ use crate::backend::database;
 use crate::backend::resource_manager::LokResourceManager;
 use crate::backend::sqlite_backend::SQLiteBackend;
 
-const DB_URL: &str = "sqlite://lokbuch.db";
+const DB_URL: &str = "sqlite://data/lokbuch.db";
 
 async fn init_backend() -> SavedData {
     let lrm = LokResourceManager::<SQLiteBackend>::build(DB_URL)
@@ -19,7 +19,7 @@ async fn init_backend() -> SavedData {
 
 fn main() -> iced::Result {
     iced::application(Lokbuch::title, Lokbuch::update, Lokbuch::view)
-        .font(include_bytes!("../fonts/icons.ttf").as_slice())
+        .font(include_bytes!("../res/fonts/icons.ttf").as_slice())
         .centered()
         .run_with(Lokbuch::new)
 }
