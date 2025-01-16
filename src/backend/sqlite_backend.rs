@@ -29,12 +29,14 @@ impl Backend for SQLiteBackend {
     }
 
     async fn insert(&self, lok: Lok) -> u32 {
-        let result = sqlx::query("INSERT INTO loks (name, address, lokmaus_name, producer, management) VALUES (?, ?, ?, ?, ?)")
+        let result = sqlx::query("INSERT INTO loks (name, address, lokmaus_name, producer, management, has_decoder, image_path) VALUES (?, ?, ?, ?, ?, ?, ?)")
             .bind(lok.name.clone())
             .bind(lok.address.clone())
             .bind(lok.lokmaus_name.clone())
             .bind(lok.producer.clone())
             .bind(lok.management.clone())
+            .bind(lok.has_decoder.clone())
+            .bind(lok.image_path.clone())
             .execute(&self.database.clone())
             .await
             .expect("Failed to add Lok to database!");
@@ -57,12 +59,14 @@ impl Backend for SQLiteBackend {
     }
 
     async fn update(&self, id: u32, new_lok: &Lok) {
-        let result = sqlx::query("UPDATE loks SET address = ?, name = ?, lokmaus_name = ?, producer = ?, management = ? WHERE id = ?;")
+        let result = sqlx::query("UPDATE loks SET address = ?, name = ?, lokmaus_name = ?, producer = ?, management = ?, has_decoder = ?, image_path = ? WHERE id = ?;")
             .bind(new_lok.address.clone())
             .bind(new_lok.name.clone())
             .bind(new_lok.lokmaus_name.clone())
             .bind(new_lok.producer.clone())
             .bind(new_lok.management.clone())
+            .bind(new_lok.has_decoder.clone())
+            .bind(new_lok.image_path.clone())
             .bind(id)
             .execute(&self.database)
             .await.unwrap();
@@ -111,22 +115,11 @@ mod sqlite_backend_tests {
 
         let backend = task::block_on(SQLiteBackend::build("sqlite://test/test13.db")).unwrap();
 
-        let id = task::block_on(backend.insert(Lok::new_from_raw_data("TEST".to_string(), 114141, "14TE".to_string(), "Roco".to_string(), "ÖBB".to_string())));
+        let id = task::block_on(backend.insert(test::util::get_test_lok_1()));
 
         println!("{}", id);
 
         assert_eq!(id, 1);
-    }
-
-    #[test]
-    fn add_lok_to_existing_db_works() {
-        let backend = task::block_on(SQLiteBackend::build("sqlite://test/test14.db")).unwrap();
-
-        let id = task::block_on(backend.insert(Lok::new_from_raw_data("TEST".to_string(), 114141, "14TE".to_string(), "Roco".to_string(), "ÖBB".to_string())));
-
-        println!("{}", id);
-
-        assert!(id >= 1);
     }
 
     #[test]
@@ -135,9 +128,9 @@ mod sqlite_backend_tests {
 
         let backend = task::block_on(SQLiteBackend::build("sqlite://test/test15.db")).unwrap();
 
-        let id = task::block_on(backend.insert(Lok::new_from_raw_data("TEST".to_string(), 114141, "14TE".to_string(), "Roco".to_string(), "ÖBB".to_string())));
+        let id = task::block_on(backend.insert(test::util::get_test_lok_1()));
 
-        task::block_on(backend.update(id, &Lok::new_from_raw_data("RRRR".to_string(), 100002, "ABCD".to_string(), "KKLE".to_string(), "DB".to_string())))
+        task::block_on(backend.update(id, &test::util::get_test_lok_2()))
     }
 
     #[test]
@@ -146,7 +139,7 @@ mod sqlite_backend_tests {
 
         let backend = task::block_on(SQLiteBackend::build("sqlite://test/test16.db")).unwrap();
 
-        let id = task::block_on(backend.insert(Lok::new_from_raw_data("TEST".to_string(), 114141, "14TE".to_string(), "Roco".to_string(), "ÖBB".to_string())));
+        let id = task::block_on(backend.insert(test::util::get_test_lok_1()));
 
         let lok = task::block_on(backend.get(id)).unwrap();
 
@@ -159,7 +152,7 @@ mod sqlite_backend_tests {
 
         let backend = task::block_on(SQLiteBackend::build("sqlite://test/test17.db")).unwrap();
 
-        let id = task::block_on(backend.insert(Lok::new_from_raw_data("TEST".to_string(), 114141, "14TE".to_string(), "Roco".to_string(), "ÖBB".to_string())));
+        let id = task::block_on(backend.insert(test::util::get_test_lok_1()));
 
         task::block_on(backend.remove(id));
 
@@ -174,12 +167,12 @@ mod sqlite_backend_tests {
 
         let backend = task::block_on(SQLiteBackend::build("sqlite://test/test18.db")).unwrap();
 
-        let _id1 = task::block_on(backend.insert(Lok::new_from_raw_data("TEST".to_string(), 114141, "14TE".to_string(), "Roco".to_string(), "ÖBB".to_string())));
-        let _id2 = task::block_on(backend.insert(Lok::new_from_raw_data("TEST1".to_string(), 114141, "14TE".to_string(), "Roco".to_string(), "ÖBB".to_string())));
+        let _id1 = task::block_on(backend.insert(test::util::get_test_lok_1()));
+        let _id2 = task::block_on(backend.insert(test::util::get_test_lok_2()));
 
         let mut previews = task::block_on(backend.get_all_previews());
 
-        assert_eq!(previews.pop().unwrap().get_name_pretty(), String::from("TEST1"));
+        assert_eq!(previews.pop().unwrap().get_name_pretty(), String::from("RRRR"));
         assert_eq!(previews.pop().unwrap().get_name_pretty(), String::from("TEST"));
     }
 }

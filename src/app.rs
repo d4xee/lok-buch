@@ -3,7 +3,7 @@ use crate::backend::sqlite_backend::SQLiteBackend;
 use crate::database::lok::Lok;
 use crate::{init_backend, ui};
 use async_std::task;
-use iced::widget::{button, center, column, container, horizontal_space, keyed_column, row, scrollable, text, text_input, vertical_space};
+use iced::widget::{button, center, column, container, horizontal_space, image, keyed_column, row, scrollable, text, text_input, vertical_space};
 use iced::{Center, Element, Fill, Left, Task};
 use rfd::MessageDialogResult;
 
@@ -36,6 +36,8 @@ pub struct State {
     lok_maus_name_input: String,
     producer_input: String,
     management_input: String,
+    has_decoder_input: bool,
+    image_path_input: String,
     search_input: String,
     selected_lok_id: Option<u32>,
 }
@@ -70,6 +72,8 @@ impl State {
         self.lok_maus_name_input.clear();
         self.producer_input.clear();
         self.management_input.clear();
+        self.has_decoder_input = false;
+        self.image_path_input.clear();
         self.search_input.clear();
         self.selected_lok_id = None;
     }
@@ -83,6 +87,8 @@ impl Default for State {
             lok_maus_name_input: String::default(),
             producer_input: String::default(),
             management_input: String::default(),
+            has_decoder_input: false,
+            image_path_input: String::default(),
             search_input: String::default(),
             selected_lok_id: None,
         }
@@ -238,6 +244,8 @@ impl Lokbuch {
                             self.state.lok_maus_name_input.clone().to_string().to_ascii_uppercase(),
                             self.state.producer_input.clone(),
                             self.state.management_input.clone(),
+                            self.state.has_decoder_input.clone(),
+                            self.state.image_path_input.clone(),
                         );
 
                         self.state.clear();
@@ -311,6 +319,8 @@ impl Lokbuch {
                             self.state.lok_maus_name_input.clone().to_string().to_ascii_uppercase(),
                             self.state.producer_input.clone(),
                             self.state.management_input.clone(),
+                            self.state.has_decoder_input.clone(),
+                            self.state.image_path_input.clone(),
                         );
 
                         let old_lok_id = self.state.selected_lok_id.clone().unwrap();
@@ -665,6 +675,7 @@ impl Lokbuch {
 
                 iced::widget::column![
                     header,
+                    image("res/images/img.png").height(200).width(200),
                     row![
                         horizontal_space(),
                         left_column,
