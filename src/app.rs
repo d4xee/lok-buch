@@ -53,14 +53,14 @@ pub enum Message {
     ManagementInputChanged(String),
     SearchInputChanged(String),
     Add,
-    CreateLok,
+    AddNewLok,
     Saved(u32),
     Search,
     Cancel,
     ShowLok(u32),
     Edit(u32),
     InputFailure(MessageDialogResult),
-    Edited,
+    EditLok,
 }
 
 impl State {
@@ -191,137 +191,37 @@ impl Lokbuch {
 
             View::Add => {
                 match message {
-                    Message::NameInputChanged(name) => {
-                        self.state.name_input = name;
-                    }
-                    Message::AddressInputChanged(address) => {
-                        self.state.address_input = address;
-                    }
-                    Message::LokMausNameInputChanged(name) => {
-                        self.state.lok_maus_name_input = name;
-                    }
-                    Message::ProducerInputChanged(producer) => {
-                        self.state.producer_input = producer;
-                    }
-                    Message::ManagementInputChanged(management) => {
-                        self.state.management_input = management;
-                    }
-                    Message::CreateLok => {
-                        println!("Create Lok: Speichern pressed");
-
-                        if self.state.name_input.is_empty() || self.state.address_input.is_empty() || self.state.lok_maus_name_input.is_empty() {
-                            let res = rfd::AsyncMessageDialog::new()
-                                .set_title("Eingabefehler")
-                                .set_description("Adresse, Bezeichnung und LOKmaus-Anzeigename dürfen nicht leer sein!")
-                                .set_buttons(rfd::MessageButtons::Ok);
-
-                            return Task::perform(res.show(), Message::InputFailure);
+                    Message::AddNewLok => {
+                        if let Some(error_task) = self.validate_input().err() {
+                            return error_task;
                         }
 
-                        let is_num = self.state.address_input.clone().parse::<i32>().is_ok();
-
-                        if !is_num {
-                            let res = rfd::AsyncMessageDialog::new()
-                                .set_title("Eingabefehler")
-                                .set_description("Adresse muss eine Zahl sein!")
-                                .set_buttons(rfd::MessageButtons::Ok);
-
-                            return Task::perform(res.show(), Message::InputFailure);
-                        }
-
-                        if self.state.lok_maus_name_input.len() > 5 {
-                            let res = rfd::AsyncMessageDialog::new()
-                                .set_title("Eingabefehler")
-                                .set_description("Der LOKmaus-Anzeigename darf nicht länger als 5 Zeichen sein!")
-                                .set_buttons(rfd::MessageButtons::Ok);
-
-                            return Task::perform(res.show(), Message::InputFailure);
-                        }
-
-                        let new_lok = Lok::new_from_raw_data(
-                            self.state.name_input.clone(),
-                            self.state.address_input.clone().parse::<i32>().unwrap(),
-                            self.state.lok_maus_name_input.clone().to_string().to_ascii_uppercase(),
-                            self.state.producer_input.clone(),
-                            self.state.management_input.clone(),
-                            self.state.has_decoder_input.clone(),
-                            self.state.image_path_input.clone(),
-                        );
-
-                        self.state.clear();
+                        let new_lok = self.get_lok_from_input_data();
 
                         task::block_on(self.lok_resource_manager.add_lok(new_lok.clone()));
 
+                        self.state.clear();
                         self.view = View::Home;
                     }
                     Message::Cancel => {
+                        self.state.clear();
                         self.view = View::Home;
                     }
-
-                    Message::Saved(id) => {
-                        self.view = View::Home;
+                    _ => {
+                        self.update_input(message);
                     }
-                    _ => {}
                 }
                 Task::none()
             }
 
             View::Edit => {
                 match message {
-                    Message::NameInputChanged(name) => {
-                        self.state.name_input = name;
-                    }
-                    Message::AddressInputChanged(address) => {
-                        self.state.address_input = address;
-                    }
-                    Message::LokMausNameInputChanged(name) => {
-                        self.state.lok_maus_name_input = name;
-                    }
-                    Message::ProducerInputChanged(producer) => {
-                        self.state.producer_input = producer;
-                    }
-                    Message::ManagementInputChanged(management) => {
-                        self.state.management_input = management;
-                    }
-                    Message::Edited => {
-                        if self.state.name_input.is_empty() || self.state.address_input.is_empty() || self.state.lok_maus_name_input.is_empty() {
-                            let res = rfd::AsyncMessageDialog::new()
-                                .set_title("Eingabefehler")
-                                .set_description("Adresse, Bezeichnung und LOKmaus-Anzeigename dürfen nicht leer sein!")
-                                .set_buttons(rfd::MessageButtons::Ok);
-
-                            return Task::perform(res.show(), Message::InputFailure);
+                    Message::EditLok => {
+                        if let Some(error_task) = self.validate_input().err() {
+                            return error_task;
                         }
 
-                        let is_num = self.state.address_input.clone().parse::<i32>().is_ok();
-
-                        if !is_num {
-                            let res = rfd::AsyncMessageDialog::new()
-                                .set_title("Eingabefehler")
-                                .set_description("Adresse muss eine Zahl sein!")
-                                .set_buttons(rfd::MessageButtons::Ok);
-
-                            return Task::perform(res.show(), Message::InputFailure);
-                        }
-
-                        if self.state.lok_maus_name_input.len() > 5 {
-                            let res = rfd::AsyncMessageDialog::new()
-                                .set_title("Eingabefehler")
-                                .set_description("Der LOKmaus-Anzeigename darf nicht länger als 5 Zeichen sein!")
-                                .set_buttons(rfd::MessageButtons::Ok);
-
-                            return Task::perform(res.show(), Message::InputFailure);
-                        }
-
-                        let new_lok = Lok::new_from_raw_data(
-                            self.state.name_input.clone(),
-                            self.state.address_input.clone().parse::<i32>().unwrap(),
-                            self.state.lok_maus_name_input.clone().to_string().to_ascii_uppercase(),
-                            self.state.producer_input.clone(),
-                            self.state.management_input.clone(),
-                            self.state.has_decoder_input.clone(),
-                            self.state.image_path_input.clone(),
-                        );
+                        let new_lok = self.get_lok_from_input_data();
 
                         let old_lok_id = self.state.selected_lok_id.clone().unwrap();
 
@@ -334,7 +234,7 @@ impl Lokbuch {
                         self.state.clear();
                         self.view = View::Home;
                     }
-                    _ => {}
+                    _ => { self.update_input(message); }
                 }
                 Task::none()
             }
@@ -350,194 +250,11 @@ impl Lokbuch {
             }
 
             View::Add => {
-                let header = ui::view_header(String::from("Hinzufügen"));
-
-                let upper_row = row![
-                    column!(
-                        text("Adresse")
-                    .size(ui::TEXT_SIZE)
-                    .align_x(Left),
-
-                    text_input("Adresse", self.state.address_input.as_str())
-                    .id("new-lok-address")
-                    .on_input(Message::AddressInputChanged)
-                    .padding(15)
-                    .size(ui::TEXT_SIZE)
-                    .align_x(Left),
-                    ),
-                    column![
-                        text("LOKmaus-Anzeigename")
-                    .size(ui::TEXT_SIZE)
-                    .align_x(Left),
-
-                    text_input("LOKmaus-Name", self.state.lok_maus_name_input.as_str())
-                    .id("new-lok-short-name")
-                    .on_input(Message::LokMausNameInputChanged)
-                    .padding(15)
-                    .size(ui::TEXT_SIZE)
-                    .align_x(Left),
-                    ]
-                ].spacing(10);
-
-                let center_row = row![
-                    column!(
-                        text("Bezeichnung")
-                    .size(ui::TEXT_SIZE)
-                    .align_x(Left),
-
-                    text_input("Bezeichnung", self.state.name_input.as_str())
-                    .id("new-lok-name")
-                    .on_input(Message::NameInputChanged)
-                    .padding(15)
-                    .size(ui::TEXT_SIZE)
-                    .align_x(Left),
-                    ),
-                    column![
-                        horizontal_space(),
-                        horizontal_space()
-                    ]
-                ].spacing(10);
-
-                let lower_row = row![
-                    column![
-                        text("Hersteller")
-                    .size(ui::TEXT_SIZE)
-                    .align_x(Left),
-
-                    text_input("Hersteller", self.state.producer_input.as_str())
-                    .id("new-lok-producer")
-                    .on_input(Message::ProducerInputChanged)
-                    .padding(15)
-                    .size(ui::TEXT_SIZE)
-                    .align_x(Left),
-                    ],
-                    column!(
-                        text("Bahnverwaltung")
-                    .size(ui::TEXT_SIZE)
-                    .align_x(Left),
-
-                    text_input("Bahnverwaltung", self.state.management_input.as_str())
-                    .id("new-lok-management")
-                    .on_input(Message::ManagementInputChanged)
-                    .padding(15)
-                    .size(ui::TEXT_SIZE)
-                    .align_x(Left),
-                    )
-                ].spacing(10);
-
-                let add_button = button(text("Speichern").size(ui::TEXT_SIZE))
-                    .on_press(Message::CreateLok)
-                    .padding(15);
-
-                let cancel_button = button(text("Abbrechen").size(ui::TEXT_SIZE))
-                    .on_press(Message::Cancel)
-                    .padding(15);
-
-                iced::widget::column![header, column![upper_row, vertical_space(), center_row, vertical_space(), lower_row], center(row![horizontal_space(),add_button, horizontal_space(), cancel_button, horizontal_space(),])].width(Fill).into()
+                self.lok_data_input_mask(String::from("Hinzufügen"), Message::AddNewLok)
             }
 
             View::Edit => {
-                let header = ui::view_header(String::from("Bearbeiten"));
-
-                let upper_row = row![
-                    column!(
-                        text("Adresse")
-                    .size(ui::TEXT_SIZE)
-                    .align_x(Left),
-
-                    text_input("Adresse", self.state.address_input.as_str())
-                    .id("new-lok-address")
-                    .on_input(Message::AddressInputChanged)
-                    .padding(15)
-                    .size(ui::TEXT_SIZE)
-                    .align_x(Left),
-                    ),
-                    column![
-                        text("LOKmaus-Anzeigename")
-                    .size(ui::TEXT_SIZE)
-                    .align_x(Left),
-
-                    text_input("LOKmaus-Name", self.state.lok_maus_name_input.as_str())
-                    .id("new-lok-short-name")
-                    .on_input(Message::LokMausNameInputChanged)
-                    .padding(15)
-                    .size(ui::TEXT_SIZE)
-                    .align_x(Left),
-                    ]
-                ].spacing(10);
-
-                let center_row = row![
-                    column!(
-                        text("Bezeichnung")
-                    .size(ui::TEXT_SIZE)
-                    .align_x(Left),
-
-                    text_input("Bezeichnung", self.state.name_input.as_str())
-                    .id("new-lok-name")
-                    .on_input(Message::NameInputChanged)
-                    .padding(15)
-                    .size(ui::TEXT_SIZE)
-                    .align_x(Left),
-                    ),
-                    column![
-                        horizontal_space(),
-                        horizontal_space()
-                    ]
-                ].spacing(10);
-
-                let lower_row = row![
-                    column![
-                        text("Hersteller")
-                    .size(ui::TEXT_SIZE)
-                    .align_x(Left),
-
-                    text_input("Hersteller", self.state.producer_input.as_str())
-                    .id("new-lok-producer")
-                    .on_input(Message::ProducerInputChanged)
-                    .padding(15)
-                    .size(ui::TEXT_SIZE)
-                    .align_x(Left),
-                    ],
-                    column!(
-                        text("Bahnverwaltung")
-                    .size(ui::TEXT_SIZE)
-                    .align_x(Left),
-
-                    text_input("Bahnverwaltung", self.state.management_input.as_str())
-                    .id("new-lok-management")
-                    .on_input(Message::ManagementInputChanged)
-                    .padding(15)
-                    .size(ui::TEXT_SIZE)
-                    .align_x(Left),
-                    )
-                ].spacing(10);
-
-                let add_button = button(text("Speichern").size(ui::TEXT_SIZE))
-                    .on_press(Message::Edited)
-                    .padding(15);
-
-                let cancel_button = button(text("Abbrechen").size(ui::TEXT_SIZE))
-                    .on_press(Message::Cancel)
-                    .padding(15);
-
-                iced::widget::column![
-                    header,
-                    column![
-                        upper_row,
-                        vertical_space(),
-                        center_row,
-                        vertical_space(),
-                        lower_row
-                    ],
-                    center(
-                        row![
-                            horizontal_space(),
-                            add_button,
-                            horizontal_space(),
-                            cancel_button,
-                            horizontal_space(),
-                        ]
-                    )].width(Fill).into()
+                self.lok_data_input_mask(String::from("Bearbeiten"), Message::EditLok)
             }
 
             View::Home => {
@@ -696,5 +413,193 @@ impl Lokbuch {
 
             View::Settings => { text("settings").into() }
         }
+    }
+
+    /// Updates all input fields with the new value, e.g. when a key is pressed.
+    fn update_input(&mut self, message: Message) {
+        match message {
+            Message::NameInputChanged(name) => {
+                self.state.name_input = name;
+            }
+            Message::AddressInputChanged(address) => {
+                self.state.address_input = address;
+            }
+            Message::LokMausNameInputChanged(name) => {
+                self.state.lok_maus_name_input = name;
+            }
+            Message::ProducerInputChanged(producer) => {
+                self.state.producer_input = producer;
+            }
+            Message::ManagementInputChanged(management) => {
+                self.state.management_input = management;
+            }
+            _ => {}
+        }
+    }
+
+    /// Defines the correct inputs for certain fields.
+    /// Validates the inputted data.
+    fn validate_input(&mut self) -> Result<(), Task<Message>> {
+        if self.state.name_input.is_empty() {
+            let res = rfd::AsyncMessageDialog::new()
+                .set_title("Eingabefehler")
+                .set_description("Bezeichnung darf nicht leer sein!")
+                .set_buttons(rfd::MessageButtons::Ok);
+
+            return Err(Task::perform(res.show(), Message::InputFailure));
+        }
+
+        if !self.state.address_input.clone().is_empty() {
+            let address = self.state.address_input.clone().parse::<i32>();
+            if address.is_ok() {
+                let address = address.unwrap();
+
+                if address <= 0 {
+                    let res = rfd::AsyncMessageDialog::new()
+                        .set_title("Eingabefehler")
+                        .set_description("Adresse muss eine Zahl größer als 0 sein!")
+                        .set_buttons(rfd::MessageButtons::Ok);
+
+                    return Err(Task::perform(res.show(), Message::InputFailure));
+                }
+            } else {
+                let res = rfd::AsyncMessageDialog::new()
+                    .set_title("Eingabefehler")
+                    .set_description("Adresse muss eine Zahl sein!")
+                    .set_buttons(rfd::MessageButtons::Ok);
+
+                return Err(Task::perform(res.show(), Message::InputFailure));
+            }
+        }
+
+        if self.state.lok_maus_name_input.len() > 5 {
+            let res = rfd::AsyncMessageDialog::new()
+                .set_title("Eingabefehler")
+                .set_description("Der LOKmaus-Anzeigename darf nicht länger als 5 Zeichen sein!")
+                .set_buttons(rfd::MessageButtons::Ok);
+
+            return Err(Task::perform(res.show(), Message::InputFailure));
+        }
+
+        Ok(())
+    }
+
+    /// Returns a new Lok instance built from the inputted data.
+    fn get_lok_from_input_data(&mut self) -> Lok {
+        Lok::new_from_raw_data(
+            self.state.name_input.clone(),
+            self.state.address_input.clone().parse::<i32>().unwrap_or(-1),
+            self.state.lok_maus_name_input.clone().to_string().to_uppercase(),
+            self.state.producer_input.clone(),
+            self.state.management_input.clone(),
+            self.state.has_decoder_input.clone(),
+            self.state.image_path_input.clone(),
+        )
+    }
+
+    /// Layouts the input mask for adding and editing a Lok.
+    /// The message on finish is emitted when the save button was pressed.
+    fn lok_data_input_mask(&self, header_text: String, message_on_finish: Message) -> Element<Message> {
+        let header = ui::view_header(header_text);
+
+        let upper_row = row![
+                    column!(
+                        text("Adresse")
+                    .size(ui::TEXT_SIZE)
+                    .align_x(Left),
+
+                    text_input("Adresse", self.state.address_input.as_str())
+                    .id("new-lok-address")
+                    .on_input(Message::AddressInputChanged)
+                    .padding(15)
+                    .size(ui::TEXT_SIZE)
+                    .align_x(Left),
+                    ),
+                    column![
+                        text("LOKmaus-Anzeigename")
+                    .size(ui::TEXT_SIZE)
+                    .align_x(Left),
+
+                    text_input("LOKmaus-Name", self.state.lok_maus_name_input.as_str())
+                    .id("new-lok-short-name")
+                    .on_input(Message::LokMausNameInputChanged)
+                    .padding(15)
+                    .size(ui::TEXT_SIZE)
+                    .align_x(Left),
+                    ]
+                ].spacing(10);
+
+        let center_row = row![
+                    column!(
+                        text("Bezeichnung")
+                    .size(ui::TEXT_SIZE)
+                    .align_x(Left),
+
+                    text_input("Bezeichnung", self.state.name_input.as_str())
+                    .id("new-lok-name")
+                    .on_input(Message::NameInputChanged)
+                    .padding(15)
+                    .size(ui::TEXT_SIZE)
+                    .align_x(Left),
+                    ),
+                    column![
+                        horizontal_space(),
+                        horizontal_space()
+                    ]
+                ].spacing(10);
+
+        let lower_row = row![
+                    column![
+                        text("Hersteller")
+                    .size(ui::TEXT_SIZE)
+                    .align_x(Left),
+
+                    text_input("Hersteller", self.state.producer_input.as_str())
+                    .id("new-lok-producer")
+                    .on_input(Message::ProducerInputChanged)
+                    .padding(15)
+                    .size(ui::TEXT_SIZE)
+                    .align_x(Left),
+                    ],
+                    column!(
+                        text("Bahnverwaltung")
+                    .size(ui::TEXT_SIZE)
+                    .align_x(Left),
+
+                    text_input("Bahnverwaltung", self.state.management_input.as_str())
+                    .id("new-lok-management")
+                    .on_input(Message::ManagementInputChanged)
+                    .padding(15)
+                    .size(ui::TEXT_SIZE)
+                    .align_x(Left),
+                    )
+                ].spacing(10);
+
+        let add_button = button(text("Speichern").size(ui::TEXT_SIZE))
+            .on_press(message_on_finish)
+            .padding(15);
+
+        let cancel_button = button(text("Abbrechen").size(ui::TEXT_SIZE))
+            .on_press(Message::Cancel)
+            .padding(15);
+
+        iced::widget::column![
+                    header,
+                    column![
+                        upper_row,
+                        vertical_space(),
+                        center_row,
+                        vertical_space(),
+                        lower_row
+                    ],
+                    center(
+                        row![
+                            horizontal_space(),
+                            add_button,
+                            horizontal_space(),
+                            cancel_button,
+                            horizontal_space(),
+                        ]
+                    )].width(Fill).into()
     }
 }
