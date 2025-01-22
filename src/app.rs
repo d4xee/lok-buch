@@ -134,7 +134,9 @@ impl Lokbuch {
                         self.state.search_input = search_input;
                     }
 
-                    Message::Search => {}
+                    Message::Search => {
+                        println!("Search pressed!");
+                    }
 
                     Message::ShowLok(id) => {
                         self.state = State {
@@ -249,7 +251,7 @@ impl Lokbuch {
     pub(crate) fn view(&self) -> Element<'_, Message> {
         match self.view {
             View::Loading => {
-                center(text("Loading...").width(Fill).align_x(Center).size(50)).into()
+                center(text("Laden...").width(Fill).align_x(Center).size(50)).into()
             }
 
             View::Add => {
@@ -270,15 +272,15 @@ impl Lokbuch {
                     .id("lok-search")
                     .on_input(Message::SearchInputChanged)
                     .padding(15)
-                    .size(ui::TEXT_SIZE)
+                    .size(ui::HEADING_TEXT_SIZE)
                     .align_x(Center);
 
 
-                let search_button = button(text("Suchen").size(ui::TEXT_SIZE))
+                let search_button = button(text("Suchen").size(ui::HEADING_TEXT_SIZE))
                     .on_press(Message::Search)
                     .padding(15);
 
-                let add_button = button(text("Neue Lok hinzufügen").size(ui::TEXT_SIZE))
+                let add_button = button(text("Neue Lok hinzufügen").size(ui::HEADING_TEXT_SIZE))
                     .on_press(Message::Add)
                     .padding(15);
 
@@ -287,17 +289,20 @@ impl Lokbuch {
                     .width(10),
 
                     text("Adresse")
-                    .size(ui::TEXT_SIZE),
+                    .size(ui::HEADING_TEXT_SIZE)
+                    .font(ui::font::get_bold_font()),
 
                     horizontal_space(),
 
                     text("LM-Name")
-                    .size(ui::TEXT_SIZE),
+                    .size(ui::HEADING_TEXT_SIZE)
+                    .font(ui::font::get_bold_font()),
 
                     horizontal_space(),
 
                     text("Bezeichnung")
-                    .size(ui::TEXT_SIZE),
+                    .size(ui::HEADING_TEXT_SIZE)
+                    .font(ui::font::get_bold_font()),
 
                     horizontal_space(),
 
@@ -334,34 +339,38 @@ impl Lokbuch {
 
                 let left_column = iced::widget::column!(
                     text("Adresse")
-                    .size(ui::TEXT_SIZE),
+                    .size(ui::HEADING_TEXT_SIZE)
+                    .font(ui::font::get_bold_font()),
 
                     text!("{}", lok.get_address_pretty())
-                    .size(ui::TEXT_SIZE),
+                    .size(ui::HEADING_TEXT_SIZE),
 
                     vertical_space(),
 
                     text("Bezeichnung")
-                    .size(ui::TEXT_SIZE),
+                    .size(ui::HEADING_TEXT_SIZE)
+                    .font(ui::font::get_bold_font()),
 
                     text!("{}", lok.name)
-                    .size(ui::TEXT_SIZE),
+                    .size(ui::HEADING_TEXT_SIZE),
 
                     vertical_space(),
 
                     text("Hersteller")
-                    .size(ui::TEXT_SIZE),
+                    .size(ui::HEADING_TEXT_SIZE)
+                    .font(ui::font::get_bold_font()),
 
                     text!("{}", lok.get_producer_pretty())
-                    .size(ui::TEXT_SIZE),
+                    .size(ui::HEADING_TEXT_SIZE),
                 ).spacing(10);
 
                 let right_column = iced::widget::column![
                     text("LOKmaus-Anzeigename")
-                    .size(ui::TEXT_SIZE),
+                    .size(ui::HEADING_TEXT_SIZE)
+                    .font(ui::font::get_bold_font()),
 
                     text!("{}", lok.get_lokmaus_name_pretty())
-                    .size(ui::TEXT_SIZE),
+                    .size(ui::HEADING_TEXT_SIZE),
 
                     vertical_space(),
                     vertical_space(),
@@ -369,24 +378,25 @@ impl Lokbuch {
                     vertical_space(),
 
                     text("Bahnverwaltung")
-                    .size(ui::TEXT_SIZE),
+                    .size(ui::HEADING_TEXT_SIZE)
+                    .font(ui::font::get_bold_font()),
 
                     text!("{}", lok.get_management_pretty())
-                    .size(ui::TEXT_SIZE)
+                    .size(ui::HEADING_TEXT_SIZE)
                 ].spacing(10);
 
 
-                let cancel_button = button(text("Abbrechen").size(ui::TEXT_SIZE))
+                let cancel_button = button(text("Abbrechen").size(ui::HEADING_TEXT_SIZE))
                     .on_press(Message::Cancel)
                     .padding(15);
 
-                let edit_button = button(row![ui::font::edit_icon(), text("Bearbeiten").size(ui::TEXT_SIZE)].align_y(Center))
+                let edit_button = button(row![ui::font::edit_icon(), text("Bearbeiten").size(ui::HEADING_TEXT_SIZE)].align_y(Center))
                     .on_press_with(move || {
                         Message::Edit(self.state.selected_lok_id.clone().unwrap())
                     })
                     .padding(15);
 
-                let remove_button = button(row![ui::font::delete_icon(), text("Löschen").size(ui::TEXT_SIZE)].align_y(Center))
+                let remove_button = button(row![ui::font::delete_icon(), text("Löschen").size(ui::HEADING_TEXT_SIZE)].align_y(Center))
                     .on_press_with(move || {
                         Message::Remove(self.state.selected_lok_id.clone().unwrap())
                     })
@@ -454,36 +464,38 @@ impl Lokbuch {
             return Err(Task::perform(res.show(), Message::InputFailure));
         }
 
-        if !self.state.address_input.clone().is_empty() {
-            let address = self.state.address_input.clone().parse::<i32>();
-            if address.is_ok() {
-                let address = address.unwrap();
+        if self.state.has_decoder_input {
+            if !self.state.address_input.clone().is_empty() {
+                let address = self.state.address_input.clone().parse::<i32>();
+                if address.is_ok() {
+                    let address = address.unwrap();
 
-                if address <= 0 {
+                    if address <= 0 {
+                        let res = rfd::AsyncMessageDialog::new()
+                            .set_title("Eingabefehler")
+                            .set_description("Adresse muss eine Zahl größer als 0 sein!")
+                            .set_buttons(rfd::MessageButtons::Ok);
+
+                        return Err(Task::perform(res.show(), Message::InputFailure));
+                    }
+                } else {
                     let res = rfd::AsyncMessageDialog::new()
                         .set_title("Eingabefehler")
-                        .set_description("Adresse muss eine Zahl größer als 0 sein!")
+                        .set_description("Adresse muss eine Zahl sein!")
                         .set_buttons(rfd::MessageButtons::Ok);
 
                     return Err(Task::perform(res.show(), Message::InputFailure));
                 }
-            } else {
+            }
+
+            if self.state.lok_maus_name_input.len() > 5 {
                 let res = rfd::AsyncMessageDialog::new()
                     .set_title("Eingabefehler")
-                    .set_description("Adresse muss eine Zahl sein!")
+                    .set_description("Der LOKmaus-Anzeigename darf nicht länger als 5 Zeichen sein!")
                     .set_buttons(rfd::MessageButtons::Ok);
 
                 return Err(Task::perform(res.show(), Message::InputFailure));
             }
-        }
-
-        if self.state.lok_maus_name_input.len() > 5 {
-            let res = rfd::AsyncMessageDialog::new()
-                .set_title("Eingabefehler")
-                .set_description("Der LOKmaus-Anzeigename darf nicht länger als 5 Zeichen sein!")
-                .set_buttons(rfd::MessageButtons::Ok);
-
-            return Err(Task::perform(res.show(), Message::InputFailure));
         }
 
         Ok(())
@@ -493,8 +505,16 @@ impl Lokbuch {
     fn get_lok_from_input_data(&mut self) -> Lok {
         Lok::new_from_raw_data(
             self.state.name_input.clone(),
-            self.state.address_input.clone().parse::<i32>().unwrap_or(-1),
-            self.state.lok_maus_name_input.clone().to_string().to_uppercase(),
+            if self.state.has_decoder_input {
+                self.state.address_input.clone().parse::<i32>().unwrap_or(-1)
+            } else {
+                -1
+            },
+            if self.state.has_decoder_input {
+                self.state.lok_maus_name_input.clone().to_string().to_uppercase()
+            } else {
+                "".to_string()
+            },
             self.state.producer_input.clone(),
             self.state.management_input.clone(),
             self.state.has_decoder_input.clone(),
@@ -512,118 +532,138 @@ impl Lokbuch {
             column![
                 column!(
                 text("Bezeichnung")
-                    .size(ui::TEXT_SIZE)
-                    .align_x(Left),
+                    .size(ui::HEADING_TEXT_SIZE)
+                    .align_x(Left)
+                    .font(ui::font::get_bold_font()),
 
                 text_input("Bezeichnung", self.state.name_input.as_str())
                     .id("new-lok-name")
                     .on_input(Message::NameInputChanged)
                     .padding(15)
-                    .size(ui::TEXT_SIZE)
+                    .size(ui::HEADING_TEXT_SIZE)
                     .align_x(Left),
                 ),
                 vertical_space(),
 
                 column!(
                 text("Analog/Digital")
-                    .size(ui::TEXT_SIZE)
-                    .align_x(Left),
+                    .size(ui::HEADING_TEXT_SIZE)
+                    .align_x(Left)
+                    .font(ui::font::get_bold_font()),
 
                 checkbox("Analog", !self.state.has_decoder_input)
                     .on_toggle(Message::HasDecoderInputChanged)
-                    .size(ui::TEXT_SIZE),
+                    .text_size(ui::HEADING_TEXT_SIZE),
+
                 checkbox("Digital", self.state.has_decoder_input)
                     .on_toggle(Message::HasDecoderInputChanged)
-                    .size(ui::TEXT_SIZE),
+                    .text_size(ui::HEADING_TEXT_SIZE),
             ),
                 vertical_space(),
             ]
         ].spacing(20).padding(20);
 
         let center_row = row![
-                    column!(
-                        text("Adresse")
-                    .size(ui::TEXT_SIZE)
-                    .align_x(Left),
+            column!(
+                text("Adresse")
+                .size(ui::HEADING_TEXT_SIZE)
+                .align_x(Left)
+                .font(ui::font::get_bold_font()),
 
-                    text_input("Adresse", self.state.address_input.as_str())
-                    .id("new-lok-address")
-                    .on_input(Message::AddressInputChanged)
-                    .padding(15)
-                    .size(ui::TEXT_SIZE)
-                    .align_x(Left),
-                    ),
-                    column![
-                        text("LOKmaus-Anzeigename")
-                    .size(ui::TEXT_SIZE)
-                    .align_x(Left),
+                text_input("Adresse", self.state.address_input.as_str())
+                .id("new-lok-address")
+                .on_input_maybe(
+                    if self.state.has_decoder_input {
+                        Some(Message::AddressInputChanged)
+                    }
+                    else {
+                        None
+                    }
+                 )
+                .padding(15)
+                .size(ui::HEADING_TEXT_SIZE)
+                .align_x(Left),
+            ),
+            column![
+                text("LOKmaus-Anzeigename")
+                .size(ui::HEADING_TEXT_SIZE)
+                .align_x(Left)
+                .font(ui::font::get_bold_font()),
 
-                    text_input("LOKmaus-Name", self.state.lok_maus_name_input.as_str())
-                    .id("new-lok-short-name")
-                    .on_input(Message::LokMausNameInputChanged)
-                    .padding(15)
-                    .size(ui::TEXT_SIZE)
-                    .align_x(Left),
-                    ]
-                ].spacing(20).padding(20);
+                text_input("LOKmaus-Name", self.state.lok_maus_name_input.as_str())
+                .id("new-lok-short-name")
+                .on_input_maybe(
+                    if self.state.has_decoder_input {
+                        Some(Message::LokMausNameInputChanged)
+                    }
+                    else {
+                        None
+                    }
+                 )
+                .padding(15)
+                .size(ui::HEADING_TEXT_SIZE)
+                .align_x(Left),
+            ]
+        ].spacing(20).padding(20);
 
         let lower_row = row![
-                    column![
-                        text("Hersteller")
-                    .size(ui::TEXT_SIZE)
-                    .align_x(Left),
+            column![
+                text("Hersteller")
+                .size(ui::HEADING_TEXT_SIZE)
+                .align_x(Left)
+                .font(ui::font::get_bold_font()),
 
-                    text_input("Hersteller", self.state.producer_input.as_str())
-                    .id("new-lok-producer")
-                    .on_input(Message::ProducerInputChanged)
-                    .padding(15)
-                    .size(ui::TEXT_SIZE)
-                    .align_x(Left),
-                    ],
-                    column!(
-                        text("Bahnverwaltung")
-                    .size(ui::TEXT_SIZE)
-                    .align_x(Left),
+                text_input("Hersteller", self.state.producer_input.as_str())
+                .id("new-lok-producer")
+                .on_input(Message::ProducerInputChanged)
+                .padding(15)
+                .size(ui::HEADING_TEXT_SIZE)
+                .align_x(Left),
+            ],
+            column!(
+                text("Bahnverwaltung")
+                .size(ui::HEADING_TEXT_SIZE)
+                .align_x(Left)
+                .font(ui::font::get_bold_font()),
 
-                    text_input("Bahnverwaltung", self.state.management_input.as_str())
-                    .id("new-lok-management")
-                    .on_input(Message::ManagementInputChanged)
-                    .padding(15)
-                    .size(ui::TEXT_SIZE)
-                    .align_x(Left),
-                    )
-                ].spacing(20).padding(20);
+                text_input("Bahnverwaltung", self.state.management_input.as_str())
+                .id("new-lok-management")
+                .on_input(Message::ManagementInputChanged)
+                .padding(15)
+                .size(ui::HEADING_TEXT_SIZE)
+                .align_x(Left),
+            )
+        ].spacing(20).padding(20);
 
-        let add_button = button(text("Speichern").size(ui::TEXT_SIZE))
+        let add_button = button(text("Speichern").size(ui::HEADING_TEXT_SIZE))
             .on_press(message_on_finish)
             .padding(15);
 
-        let cancel_button = button(text("Abbrechen").size(ui::TEXT_SIZE))
+        let cancel_button = button(text("Abbrechen").size(ui::HEADING_TEXT_SIZE))
             .on_press(Message::Cancel)
             .padding(15);
 
         iced::widget::column![
-                    header,
-                    column![
-                        column![
+            header,
+            column![
+                column![
                     upper_row,
                 ],
-                        column![
+                column![
                     vertical_space(),
-                        center_row,
-                        vertical_space(),
-                        lower_row,
+                    center_row,
+                    vertical_space(),
+                    lower_row,
                     vertical_space()
                 ]
-                    ].height(Fill),
-
-                        row![
-                            horizontal_space(),
-                            add_button,
-                            horizontal_space(),
-                            cancel_button,
-                            horizontal_space(),
-                        ]
-                    ].width(Fill).into()
+            ].height(Fill),
+            row![
+                horizontal_space(),
+                add_button,
+                horizontal_space(),
+                cancel_button,
+                horizontal_space(),
+            ],
+        ].width(Fill).into()
     }
 }

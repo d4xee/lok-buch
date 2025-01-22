@@ -5,7 +5,7 @@ use iced::{Center, Element, Fill};
 
 const VIEW_NAME_TEXT_SIZE: u16 = 25;
 const VIEW_TITLE_TEXT_SIZE: u16 = 75;
-pub const TEXT_SIZE: u16 = 20;
+pub const HEADING_TEXT_SIZE: u16 = 20;
 
 pub const NO_DATA_AVAILABLE_TEXT: &str = "---";
 
@@ -15,7 +15,8 @@ pub fn view_header<'a>(name: String) -> Element<'a, Message> {
             .width(Fill)
             .size(VIEW_TITLE_TEXT_SIZE)
             .color([0.5, 0.5, 0.5])
-            .align_x(Center),
+            .align_x(Center)
+            .font(font::get_bold_font()),
 
         text(name)
             .width(Fill)
@@ -77,7 +78,7 @@ pub fn preview_as_ui_element<'a>(preview: PreviewLok) -> Container<'a, Message> 
 
 pub mod font {
     use iced::widget::{text, Text};
-    use iced::{Center, Font};
+    use iced::{font, Center, Font};
 
     const ICONS: Font = Font::with_name("Iced-Todos-Icons");
 
@@ -94,5 +95,9 @@ pub mod font {
 
     pub fn delete_icon() -> Text<'static> {
         icon('\u{F1F8}')
+    }
+
+    pub fn get_bold_font() -> Font {
+        Font { weight: font::Weight::Bold, ..Font::default() }
     }
 }
