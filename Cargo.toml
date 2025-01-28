@@ -12,3 +12,5 @@ async-std = "1.13.0"
 sqlx = { version = "0.8.2", features = ["runtime-async-std-native-tls", "sqlite", "macros"] }
 time = { version = "0.3.36", features = ["macros"] }
 rfd = "0.15.1"
+iced_aw = { version = "0.11.0", default-features = false, features = ["number_input", "card"] }
+iced_gif = "0.13.0"

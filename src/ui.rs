@@ -9,6 +9,8 @@ pub const HEADING_TEXT_SIZE: u16 = 20;
 
 pub const NO_DATA_AVAILABLE_TEXT: &str = "---";
 
+pub const ICON_PATH: &str = "res/images/icon.png";
+
 pub fn view_header<'a>(name: String) -> Element<'a, Message> {
     column!(
         text("LOKBUCH")
@@ -74,6 +76,10 @@ pub fn preview_as_ui_element<'a>(preview: PreviewLok) -> Container<'a, Message> 
         .padding(10)
         .style(container::rounded_box)
         .width(Fill)
+}
+
+pub fn moving_icon() -> iced_gif::Frames {
+    iced_gif::Frames::from_bytes(include_bytes!("../res/images/icon_move.gif").into()).expect("Decoding gif failed!")
 }
 
 pub mod font {
