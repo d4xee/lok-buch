@@ -13,6 +13,7 @@ pub struct Lokbuch {
     view: View,
     state: State,
     lok_resource_manager: LokResourceManager<SQLiteBackend>,
+    moving_icon_frames: iced_gif::Frames,
 }
 
 pub enum View {
@@ -102,6 +103,7 @@ impl Lokbuch {
             view: View::Loading,
             state: State::default(),
             lok_resource_manager: LokResourceManager::default(),
+            moving_icon_frames: ui::moving_icon(),
         },
          Task::perform(init_backend(), Message::Loaded))
     }
@@ -113,6 +115,8 @@ impl Lokbuch {
     pub(crate) fn update(&mut self, message: Message) -> Task<Message> {
         match self.view {
             View::Loading => {
+                self.moving_icon_frames = ui::moving_icon();
+
                 match message {
                     Message::Loaded(saved_data) => {
                         self.lok_resource_manager = saved_data.lrm.clone();
@@ -136,6 +140,7 @@ impl Lokbuch {
 
                     Message::Search => {
                         println!("Search pressed!");
+                        //implement search by creating a search string made of address, LMname and name
                     }
 
                     Message::ShowLok(id) => {
@@ -251,7 +256,10 @@ impl Lokbuch {
     pub(crate) fn view(&self) -> Element<'_, Message> {
         match self.view {
             View::Loading => {
-                center(text("Laden...").width(Fill).align_x(Center).size(50)).into()
+                center(column![
+                    iced_gif::Gif::new(&self.moving_icon_frames),
+                    text("Laden...").size(50)])
+                    .into()
             }
 
             View::Add => {
