@@ -1,22 +1,29 @@
+mod state;
+mod stored_data;
+pub(crate) mod message;
+
+use crate::app::message::Message;
+use crate::app::state::State;
+use crate::app::stored_data::StoredData;
 use crate::backend::resource_manager::LokResourceManager;
 use crate::backend::sqlite_backend::SQLiteBackend;
-use crate::database::lok::Lok;
-use crate::{init_backend, ui};
+use crate::frontend;
+use crate::frontend::widgets::{header, preview_widget};
 use async_std::task;
 use iced::widget::{button, center, checkbox, column, container, horizontal_space, image, keyed_column, row, scrollable, text, text_input, vertical_space};
 use iced::{Center, ContentFit, Element, Fill, Left, Task};
-use rfd::MessageDialogResult;
 
 const VERSION: &str = env!("CARGO_PKG_VERSION");
+const DB_URL: &str = "sqlite://data/lokbuch.db";
 
 pub struct Lokbuch {
-    view: View,
+    page: Page,
     state: State,
     lok_resource_manager: LokResourceManager<SQLiteBackend>,
     moving_icon_frames: iced_gif::Frames,
 }
 
-pub enum View {
+pub enum Page {
     Loading,
     Home,
     Add,
@@ -25,87 +32,15 @@ pub enum View {
     Settings,
 }
 
-#[derive(Clone, Debug)]
-pub struct SavedData {
-    pub(crate) lrm: LokResourceManager<SQLiteBackend>,
-}
-
-#[derive(Clone)]
-pub struct State {
-    name_input: String,
-    address_input: String,
-    lok_maus_name_input: String,
-    producer_input: String,
-    management_input: String,
-    has_decoder_input: bool,
-    image_path_input: String,
-    search_input: String,
-    selected_lok_id: Option<u32>,
-}
-
-#[derive(Clone, Debug)]
-pub enum Message {
-    Loaded(SavedData),
-    Remove(u32),
-    NameInputChanged(String),
-    AddressInputChanged(String),
-    LokMausNameInputChanged(String),
-    ProducerInputChanged(String),
-    ManagementInputChanged(String),
-    HasDecoderInputChanged(bool),
-    SearchInputChanged(String),
-    Add,
-    AddNewLok,
-    Saved(u32),
-    Search,
-    Cancel,
-    ShowLok(u32),
-    Edit(u32),
-    InputFailure(MessageDialogResult),
-    EditLok,
-}
-
-impl State {
-    /// Clears all internal state variables.
-    /// These are usually the user inputs.
-    fn clear(&mut self) {
-        self.name_input.clear();
-        self.address_input.clear();
-        self.lok_maus_name_input.clear();
-        self.producer_input.clear();
-        self.management_input.clear();
-        self.has_decoder_input = false;
-        self.image_path_input.clear();
-        self.search_input.clear();
-        self.selected_lok_id = None;
-    }
-}
-
-impl Default for State {
-    fn default() -> Self {
-        State {
-            name_input: String::default(),
-            address_input: String::default(),
-            lok_maus_name_input: String::default(),
-            producer_input: String::default(),
-            management_input: String::default(),
-            has_decoder_input: false,
-            image_path_input: String::default(),
-            search_input: String::default(),
-            selected_lok_id: None,
-        }
-    }
-}
-
 impl Lokbuch {
     pub(crate) fn new() -> (Self, Task<Message>) {
         (Lokbuch {
-            view: View::Loading,
+            page: Page::Loading,
             state: State::default(),
             lok_resource_manager: LokResourceManager::default(),
-            moving_icon_frames: ui::moving_icon(),
+            moving_icon_frames: frontend::moving_icon_frames(),
         },
-         Task::perform(init_backend(), Message::Loaded))
+         Task::perform(StoredData::init_backend(DB_URL), Message::Loaded))
     }
 
     pub(crate) fn title(&self) -> String {
@@ -113,24 +48,24 @@ impl Lokbuch {
     }
 
     pub(crate) fn update(&mut self, message: Message) -> Task<Message> {
-        match self.view {
-            View::Loading => {
-                self.moving_icon_frames = ui::moving_icon();
+        match self.page {
+            Page::Loading => {
+                self.moving_icon_frames = frontend::moving_icon_frames();
 
                 match message {
                     Message::Loaded(saved_data) => {
                         self.lok_resource_manager = saved_data.lrm.clone();
-                        self.view = View::Home;
+                        self.page = Page::Home;
                     }
                     _ => {}
                 }
                 Task::none()
             }
 
-            View::Home | View::Show => {
+            Page::Home | Page::Show => {
                 match message {
                     Message::Add => {
-                        self.view = View::Add;
+                        self.page = Page::Add;
                         return text_input::focus("new-lok-name");
                     }
 
@@ -149,11 +84,11 @@ impl Lokbuch {
                             ..State::default()
                         };
 
-                        self.view = View::Show;
+                        self.page = Page::Show;
                     }
 
                     Message::Cancel => {
-                        self.view = View::Home;
+                        self.page = Page::Home;
                     }
 
                     Message::Edit(id) => {
@@ -184,14 +119,14 @@ impl Lokbuch {
                             ..State::default()
                         };
 
-                        self.view = View::Edit;
+                        self.page = Page::Edit;
                         return text_input::focus("new-lok-name");
                     }
 
                     Message::Remove(id) => {
                         task::block_on(self.lok_resource_manager.remove_lok(id)); // TODO async remove
 
-                        self.view = View::Home;
+                        self.page = Page::Home;
                     }
 
                     _ => {}
@@ -199,96 +134,96 @@ impl Lokbuch {
                 Task::none()
             }
 
-            View::Add => {
+            Page::Add => {
                 match message {
                     Message::AddNewLok => {
-                        if let Some(error_task) = self.validate_input().err() {
+                        if let Some(error_task) = self.state.validate().err() {
                             return error_task;
                         }
 
-                        let new_lok = self.get_lok_from_input_data();
+                        let new_lok = self.state.get_lok_from_current_state();
 
                         task::block_on(self.lok_resource_manager.add_lok(new_lok.clone()));
 
                         self.state.clear();
-                        self.view = View::Home;
+                        self.page = Page::Home;
                     }
                     Message::Cancel => {
                         self.state.clear();
-                        self.view = View::Home;
+                        self.page = Page::Home;
                     }
                     _ => {
-                        self.update_input(message);
+                        self.state.update(message);
                     }
                 }
                 Task::none()
             }
 
-            View::Edit => {
+            Page::Edit => {
                 match message {
                     Message::EditLok => {
-                        if let Some(error_task) = self.validate_input().err() {
+                        if let Some(error_task) = self.state.validate().err() {
                             return error_task;
                         }
 
-                        let new_lok = self.get_lok_from_input_data();
+                        let new_lok = self.state.get_lok_from_current_state();
 
                         let old_lok_id = self.state.selected_lok_id.clone().unwrap();
 
                         task::block_on(self.lok_resource_manager.update_lok(old_lok_id, new_lok));
 
                         self.state.clear();
-                        self.view = View::Home;
+                        self.page = Page::Home;
                     }
                     Message::Cancel => {
                         self.state.clear();
-                        self.view = View::Home;
+                        self.page = Page::Home;
                     }
-                    _ => { self.update_input(message); }
+                    _ => { self.state.update(message); }
                 }
                 Task::none()
             }
 
-            View::Settings => { Task::none() }
+            Page::Settings => { Task::none() }
         }
     }
 
     pub(crate) fn view(&self) -> Element<'_, Message> {
-        match self.view {
-            View::Loading => {
+        match self.page {
+            Page::Loading => {
                 center(column![
                     iced_gif::Gif::new(&self.moving_icon_frames),
                     text("Laden...").size(50)])
                     .into()
             }
 
-            View::Add => {
+            Page::Add => {
                 self.lok_data_input_mask(String::from("Hinzufügen"), Message::AddNewLok)
             }
 
-            View::Edit => {
+            Page::Edit => {
                 self.lok_data_input_mask(String::from("Bearbeiten"), Message::EditLok)
             }
 
-            View::Home => {
+            Page::Home => {
                 let num_of_loks = self.lok_resource_manager.number_of_loks();
                 let mut previews = self.lok_resource_manager.get_all_previews().clone();
 
-                let header = ui::view_header(format!("{} Loks vorhanden", num_of_loks));
+                let header = header(format!("{} Loks vorhanden", num_of_loks));
 
                 let input_search = text_input("Suchen...", self.state.search_input.as_str())
                     .id("lok-search")
                     .on_input(Message::SearchInputChanged)
                     .padding(15)
-                    .size(ui::HEADING_TEXT_SIZE)
+                    .size(frontend::HEADING_TEXT_SIZE)
                     .align_x(Center);
 
 
-                let search_button = button(text("Suchen").size(ui::HEADING_TEXT_SIZE))
+                let search_button = button(text("Suchen").size(frontend::HEADING_TEXT_SIZE))
                     .on_press(Message::Search)
                     .padding(15);
 
-                let add_button = button(text("Neue Lok hinzufügen").size(ui::HEADING_TEXT_SIZE))
+                let add_button = button(text("Neue Lok hinzufügen").size(frontend::HEADING_TEXT_SIZE))
                     .on_press(Message::Add)
                     .padding(15);
 
@@ -297,20 +232,20 @@ impl Lokbuch {
                     .width(10),
 
                     text("Adresse")
-                    .size(ui::HEADING_TEXT_SIZE)
-                    .font(ui::font::get_bold_font()),
+                    .size(frontend::HEADING_TEXT_SIZE)
+                    .font(frontend::font::bold_font()),
 
                     horizontal_space(),
 
                     text("LM-Name")
-                    .size(ui::HEADING_TEXT_SIZE)
-                    .font(ui::font::get_bold_font()),
+                    .size(frontend::HEADING_TEXT_SIZE)
+                    .font(frontend::font::bold_font()),
 
                     horizontal_space(),
 
                     text("Bezeichnung")
-                    .size(ui::HEADING_TEXT_SIZE)
-                    .font(ui::font::get_bold_font()),
+                    .size(frontend::HEADING_TEXT_SIZE)
+                    .font(frontend::font::bold_font()),
 
                     horizontal_space(),
 
@@ -323,7 +258,7 @@ impl Lokbuch {
                     previews.into_iter().map(move |item| {
                         let preview = item.clone();
                         (0, iced::widget::column!(
-                        button(ui::preview_as_ui_element(preview.clone()))
+                        button(preview_widget(preview.clone()))
                         .style(button::text)
                         .on_press_with(move || {
                             Message::ShowLok(item.clone().get_id())
@@ -339,46 +274,46 @@ impl Lokbuch {
                 content.into()
             }
 
-            View::Show => {
+            Page::Show => {
                 let mut lrm = self.lok_resource_manager.clone();
                 let lok = task::block_on(lrm.get_lok(self.state.selected_lok_id.unwrap())).expect("lok not found"); // TODO async show
 
-                let header = ui::view_header(format!("{}", lok.name));
+                let header = header(format!("{}", lok.name));
 
                 let left_column = iced::widget::column!(
                     text("Adresse")
-                    .size(ui::HEADING_TEXT_SIZE)
-                    .font(ui::font::get_bold_font()),
+                    .size(frontend::HEADING_TEXT_SIZE)
+                    .font(frontend::font::bold_font()),
 
                     text!("{}", lok.get_address_pretty())
-                    .size(ui::HEADING_TEXT_SIZE),
+                    .size(frontend::HEADING_TEXT_SIZE),
 
                     vertical_space(),
 
                     text("Bezeichnung")
-                    .size(ui::HEADING_TEXT_SIZE)
-                    .font(ui::font::get_bold_font()),
+                    .size(frontend::HEADING_TEXT_SIZE)
+                    .font(frontend::font::bold_font()),
 
                     text!("{}", lok.name)
-                    .size(ui::HEADING_TEXT_SIZE),
+                    .size(frontend::HEADING_TEXT_SIZE),
 
                     vertical_space(),
 
                     text("Hersteller")
-                    .size(ui::HEADING_TEXT_SIZE)
-                    .font(ui::font::get_bold_font()),
+                    .size(frontend::HEADING_TEXT_SIZE)
+                    .font(frontend::font::bold_font()),
 
                     text!("{}", lok.get_producer_pretty())
-                    .size(ui::HEADING_TEXT_SIZE),
+                    .size(frontend::HEADING_TEXT_SIZE),
                 ).spacing(10);
 
                 let right_column = iced::widget::column![
                     text("LOKmaus-Anzeigename")
-                    .size(ui::HEADING_TEXT_SIZE)
-                    .font(ui::font::get_bold_font()),
+                    .size(frontend::HEADING_TEXT_SIZE)
+                    .font(frontend::font::bold_font()),
 
                     text!("{}", lok.get_lokmaus_name_pretty())
-                    .size(ui::HEADING_TEXT_SIZE),
+                    .size(frontend::HEADING_TEXT_SIZE),
 
                     vertical_space(),
                     vertical_space(),
@@ -386,25 +321,25 @@ impl Lokbuch {
                     vertical_space(),
 
                     text("Bahnverwaltung")
-                    .size(ui::HEADING_TEXT_SIZE)
-                    .font(ui::font::get_bold_font()),
+                    .size(frontend::HEADING_TEXT_SIZE)
+                    .font(frontend::font::bold_font()),
 
                     text!("{}", lok.get_management_pretty())
-                    .size(ui::HEADING_TEXT_SIZE)
+                    .size(frontend::HEADING_TEXT_SIZE)
                 ].spacing(10);
 
 
-                let cancel_button = button(text("Abbrechen").size(ui::HEADING_TEXT_SIZE))
+                let cancel_button = button(text("Abbrechen").size(frontend::HEADING_TEXT_SIZE))
                     .on_press(Message::Cancel)
                     .padding(15);
 
-                let edit_button = button(row![ui::font::edit_icon(), text("Bearbeiten").size(ui::HEADING_TEXT_SIZE)].align_y(Center))
+                let edit_button = button(row![frontend::font::edit_icon(), text("Bearbeiten").size(frontend::HEADING_TEXT_SIZE)].align_y(Center))
                     .on_press_with(move || {
                         Message::Edit(self.state.selected_lok_id.clone().unwrap())
                     })
                     .padding(15);
 
-                let remove_button = button(row![ui::font::delete_icon(), text("Löschen").size(ui::HEADING_TEXT_SIZE)].align_y(Center))
+                let remove_button = button(row![frontend::font::delete_icon(), text("Löschen").size(frontend::HEADING_TEXT_SIZE)].align_y(Center))
                     .on_press_with(move || {
                         Message::Remove(self.state.selected_lok_id.clone().unwrap())
                     })
@@ -431,141 +366,46 @@ impl Lokbuch {
                     ])].width(Fill).into()
             }
 
-            View::Settings => { text("settings").into() }
+            Page::Settings => { text("settings").into() }
         }
-    }
-
-    /// Updates all input fields with the new value, e.g. when a key is pressed.
-    fn update_input(&mut self, message: Message) {
-        match message {
-            Message::NameInputChanged(name) => {
-                self.state.name_input = name;
-            }
-            Message::AddressInputChanged(address) => {
-                self.state.address_input = address;
-            }
-            Message::LokMausNameInputChanged(name) => {
-                self.state.lok_maus_name_input = name;
-            }
-            Message::ProducerInputChanged(producer) => {
-                self.state.producer_input = producer;
-            }
-            Message::ManagementInputChanged(management) => {
-                self.state.management_input = management;
-            }
-            Message::HasDecoderInputChanged(_) => {
-                self.state.has_decoder_input = !self.state.has_decoder_input;
-            }
-            _ => {}
-        }
-    }
-
-    /// Defines the correct inputs for certain fields.
-    /// Validates the inputted data.
-    fn validate_input(&mut self) -> Result<(), Task<Message>> {
-        if self.state.name_input.is_empty() {
-            let res = rfd::AsyncMessageDialog::new()
-                .set_title("Eingabefehler")
-                .set_description("Bezeichnung darf nicht leer sein!")
-                .set_buttons(rfd::MessageButtons::Ok);
-
-            return Err(Task::perform(res.show(), Message::InputFailure));
-        }
-
-        if self.state.has_decoder_input {
-            if !self.state.address_input.clone().is_empty() {
-                let address = self.state.address_input.clone().parse::<i32>();
-                if address.is_ok() {
-                    let address = address.unwrap();
-
-                    if address <= 0 {
-                        let res = rfd::AsyncMessageDialog::new()
-                            .set_title("Eingabefehler")
-                            .set_description("Adresse muss eine Zahl größer als 0 sein!")
-                            .set_buttons(rfd::MessageButtons::Ok);
-
-                        return Err(Task::perform(res.show(), Message::InputFailure));
-                    }
-                } else {
-                    let res = rfd::AsyncMessageDialog::new()
-                        .set_title("Eingabefehler")
-                        .set_description("Adresse muss eine Zahl sein!")
-                        .set_buttons(rfd::MessageButtons::Ok);
-
-                    return Err(Task::perform(res.show(), Message::InputFailure));
-                }
-            }
-
-            if self.state.lok_maus_name_input.len() > 5 {
-                let res = rfd::AsyncMessageDialog::new()
-                    .set_title("Eingabefehler")
-                    .set_description("Der LOKmaus-Anzeigename darf nicht länger als 5 Zeichen sein!")
-                    .set_buttons(rfd::MessageButtons::Ok);
-
-                return Err(Task::perform(res.show(), Message::InputFailure));
-            }
-        }
-
-        Ok(())
-    }
-
-    /// Returns a new Lok instance built from the inputted data.
-    fn get_lok_from_input_data(&mut self) -> Lok {
-        Lok::new_from_raw_data(
-            self.state.name_input.clone(),
-            if self.state.has_decoder_input {
-                self.state.address_input.clone().parse::<i32>().unwrap_or(-1)
-            } else {
-                -1
-            },
-            if self.state.has_decoder_input {
-                self.state.lok_maus_name_input.clone().to_string().to_uppercase()
-            } else {
-                "".to_string()
-            },
-            self.state.producer_input.clone(),
-            self.state.management_input.clone(),
-            self.state.has_decoder_input.clone(),
-            self.state.image_path_input.clone(),
-        )
     }
 
     /// Layouts the input mask for adding and editing a Lok.
     /// The message on finish is emitted when the save button was pressed.
     fn lok_data_input_mask(&self, header_text: String, message_on_finish: Message) -> Element<Message> {
-        let header = ui::view_header(header_text);
+        let header = header(header_text);
 
         let upper_row = row![
             button(image("res/images/blue.png").width(400).content_fit(ContentFit::Cover)).style(button::text),
             column![
                 column!(
                 text("Bezeichnung")
-                    .size(ui::HEADING_TEXT_SIZE)
+                    .size(frontend::HEADING_TEXT_SIZE)
                     .align_x(Left)
-                    .font(ui::font::get_bold_font()),
+                    .font(frontend::font::bold_font()),
 
                 text_input("Bezeichnung", self.state.name_input.as_str())
                     .id("new-lok-name")
                     .on_input(Message::NameInputChanged)
                     .padding(15)
-                    .size(ui::HEADING_TEXT_SIZE)
+                    .size(frontend::HEADING_TEXT_SIZE)
                     .align_x(Left),
                 ),
                 vertical_space(),
 
                 column!(
                 text("Analog/Digital")
-                    .size(ui::HEADING_TEXT_SIZE)
+                    .size(frontend::HEADING_TEXT_SIZE)
                     .align_x(Left)
-                    .font(ui::font::get_bold_font()),
+                    .font(frontend::font::bold_font()),
 
                 checkbox("Analog", !self.state.has_decoder_input)
                     .on_toggle(Message::HasDecoderInputChanged)
-                    .text_size(ui::HEADING_TEXT_SIZE),
+                    .text_size(frontend::HEADING_TEXT_SIZE),
 
                 checkbox("Digital", self.state.has_decoder_input)
                     .on_toggle(Message::HasDecoderInputChanged)
-                    .text_size(ui::HEADING_TEXT_SIZE),
+                    .text_size(frontend::HEADING_TEXT_SIZE),
             ),
                 vertical_space(),
             ]
@@ -574,9 +414,9 @@ impl Lokbuch {
         let center_row = row![
             column!(
                 text("Adresse")
-                .size(ui::HEADING_TEXT_SIZE)
+                .size(frontend::HEADING_TEXT_SIZE)
                 .align_x(Left)
-                .font(ui::font::get_bold_font()),
+                .font(frontend::font::bold_font()),
 
                 text_input("Adresse", self.state.address_input.as_str())
                 .id("new-lok-address")
@@ -589,14 +429,14 @@ impl Lokbuch {
                     }
                  )
                 .padding(15)
-                .size(ui::HEADING_TEXT_SIZE)
+                .size(frontend::HEADING_TEXT_SIZE)
                 .align_x(Left),
             ),
             column![
                 text("LOKmaus-Anzeigename")
-                .size(ui::HEADING_TEXT_SIZE)
+                .size(frontend::HEADING_TEXT_SIZE)
                 .align_x(Left)
-                .font(ui::font::get_bold_font()),
+                .font(frontend::font::bold_font()),
 
                 text_input("LOKmaus-Name", self.state.lok_maus_name_input.as_str())
                 .id("new-lok-short-name")
@@ -609,7 +449,7 @@ impl Lokbuch {
                     }
                  )
                 .padding(15)
-                .size(ui::HEADING_TEXT_SIZE)
+                .size(frontend::HEADING_TEXT_SIZE)
                 .align_x(Left),
             ]
         ].spacing(20).padding(20);
@@ -617,37 +457,37 @@ impl Lokbuch {
         let lower_row = row![
             column![
                 text("Hersteller")
-                .size(ui::HEADING_TEXT_SIZE)
+                .size(frontend::HEADING_TEXT_SIZE)
                 .align_x(Left)
-                .font(ui::font::get_bold_font()),
+                .font(frontend::font::bold_font()),
 
                 text_input("Hersteller", self.state.producer_input.as_str())
                 .id("new-lok-producer")
                 .on_input(Message::ProducerInputChanged)
                 .padding(15)
-                .size(ui::HEADING_TEXT_SIZE)
+                .size(frontend::HEADING_TEXT_SIZE)
                 .align_x(Left),
             ],
             column!(
                 text("Bahnverwaltung")
-                .size(ui::HEADING_TEXT_SIZE)
+                .size(frontend::HEADING_TEXT_SIZE)
                 .align_x(Left)
-                .font(ui::font::get_bold_font()),
+                .font(frontend::font::bold_font()),
 
                 text_input("Bahnverwaltung", self.state.management_input.as_str())
                 .id("new-lok-management")
                 .on_input(Message::ManagementInputChanged)
                 .padding(15)
-                .size(ui::HEADING_TEXT_SIZE)
+                .size(frontend::HEADING_TEXT_SIZE)
                 .align_x(Left),
             )
         ].spacing(20).padding(20);
 
-        let add_button = button(text("Speichern").size(ui::HEADING_TEXT_SIZE))
+        let add_button = button(text("Speichern").size(frontend::HEADING_TEXT_SIZE))
             .on_press(message_on_finish)
             .padding(15);
 
-        let cancel_button = button(text("Abbrechen").size(ui::HEADING_TEXT_SIZE))
+        let cancel_button = button(text("Abbrechen").size(frontend::HEADING_TEXT_SIZE))
             .on_press(Message::Cancel)
             .padding(15);
 

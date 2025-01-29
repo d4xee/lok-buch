@@ -1,5 +1,5 @@
 use crate::database::preview_lok::PreviewLok;
-use crate::ui;
+use crate::frontend;
 
 #[derive(Clone, Debug, Hash, Ord, PartialOrd, Eq, PartialEq)]
 pub struct Lok {
@@ -100,7 +100,7 @@ impl Lok {
         if let Some(address) = self.address {
             address.to_string()
         } else {
-            ui::NO_DATA_AVAILABLE_TEXT.to_string()
+            frontend::NO_DATA_AVAILABLE_TEXT.to_string()
         }
     }
 
@@ -108,7 +108,7 @@ impl Lok {
         if let Some(lokmaus_name) = self.lokmaus_name.clone() {
             lokmaus_name
         } else {
-            ui::NO_DATA_AVAILABLE_TEXT.to_string()
+            frontend::NO_DATA_AVAILABLE_TEXT.to_string()
         }
     }
 
@@ -116,7 +116,7 @@ impl Lok {
         if let Some(producer) = self.producer.clone() {
             producer
         } else {
-            ui::NO_DATA_AVAILABLE_TEXT.to_string()
+            frontend::NO_DATA_AVAILABLE_TEXT.to_string()
         }
     }
 
@@ -124,7 +124,7 @@ impl Lok {
         if let Some(management) = self.management.clone() {
             management
         } else {
-            ui::NO_DATA_AVAILABLE_TEXT.to_string()
+            frontend::NO_DATA_AVAILABLE_TEXT.to_string()
         }
     }
 
