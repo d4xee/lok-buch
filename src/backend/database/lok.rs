@@ -47,7 +47,7 @@ impl Lok {
     pub fn new_from_raw_lok_data(raw_lok_data: &RawLokData) -> Lok {
         Lok::new(
             raw_lok_data.name.clone(),
-            if raw_lok_data.address < 0 { None } else { Some(raw_lok_data.address) },
+            if raw_lok_data.address < 0 { Some(-1) } else { Some(raw_lok_data.address) },
             if raw_lok_data.lokmaus_name.is_empty() { None } else { Some(raw_lok_data.lokmaus_name.clone()) },
             if raw_lok_data.producer.is_empty() { None } else { Some(raw_lok_data.producer.clone()) },
             if raw_lok_data.management.is_empty() { None } else { Some(raw_lok_data.management.clone()) },
@@ -98,7 +98,11 @@ impl Lok {
 
     pub fn get_address_pretty(&self) -> String {
         if let Some(address) = self.address {
-            address.to_string()
+            if address < 0 {
+                frontend::NO_DATA_AVAILABLE_TEXT.to_string()
+            } else {
+                address.to_string()
+            }
         } else {
             frontend::NO_DATA_AVAILABLE_TEXT.to_string()
         }

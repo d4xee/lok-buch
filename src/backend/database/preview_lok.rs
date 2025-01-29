@@ -53,10 +53,13 @@ impl PreviewLok {
     }
 
     pub fn get_address_pretty(&self) -> String {
-        if let Some(address) = self.address.clone() {
-            address.to_string()
-        }
-        else {
+        if let Some(address) = self.address {
+            if address < 0 {
+                frontend::NO_DATA_AVAILABLE_TEXT.to_string()
+            } else {
+                address.to_string()
+            }
+        } else {
             frontend::NO_DATA_AVAILABLE_TEXT.to_string()
         }
     }
