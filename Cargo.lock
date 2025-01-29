@@ -132,7 +132,7 @@ version = "0.10.2"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "e9c39d707614dbcc6bed00015539f488d8e3fe3e66ed60961efc0c90f4b380b3"
 dependencies = [
-    "async-fs 2.1.2",
+ "async-fs 2.1.2",
  "async-net",
  "enumflags2",
  "futures-channel",
@@ -202,10 +202,10 @@ version = "1.6.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "279cf904654eeebfa37ac9bb1598880884924aab82e290aa65c9e77a0e142e06"
 dependencies = [
-    "async-lock 2.8.0",
-    "autocfg",
-    "blocking",
-    "futures-lite 1.13.0",
+ "async-lock 2.8.0",
+ "autocfg",
+ "blocking",
+ "futures-lite 1.13.0",
 ]
 
 [[package]]
@@ -1772,11 +1772,11 @@ version = "0.11.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "42e05df3019f20c6decea93d035b32a2afc7b329d89cc5a68cca097d0e0a1889"
 dependencies = [
-    "cfg-if",
-    "iced",
-    "iced_fonts",
-    "num-format",
-    "num-traits",
+ "cfg-if",
+ "iced",
+ "iced_fonts",
+ "num-format",
+ "num-traits",
 ]
 
 [[package]]
@@ -1805,7 +1805,7 @@ version = "0.1.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "df7deb0800a850ee25c8a42559f72c0f249e577feb3aad37b9b65dc1e517e52a"
 dependencies = [
-    "iced_core",
+ "iced_core",
 ]
 
 [[package]]
@@ -1828,11 +1828,11 @@ version = "0.13.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "8071fc8289c205fb75536cef1d91a75dba2f1c0e4931cb4245bd3e637940d23c"
 dependencies = [
-    "async-fs 1.6.0",
-    "iced_futures",
-    "iced_widget",
-    "image",
-    "thiserror",
+ "async-fs 1.6.0",
+ "iced_futures",
+ "iced_widget",
+ "image",
+ "thiserror",
 ]
 
 [[package]]
@@ -2373,8 +2373,8 @@ dependencies = [
  "async-std",
  "futures",
  "iced",
-    "iced_aw",
-    "iced_gif",
+ "iced_aw",
+ "iced_gif",
  "rfd",
  "sqlx",
  "time",
@@ -2594,8 +2594,8 @@ version = "0.4.4"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "a652d9771a63711fd3c3deb670acfbe5c30a4072e664d7a3bf5a9e1056ac72c3"
 dependencies = [
-    "arrayvec",
-    "itoa",
+ "arrayvec",
+ "itoa",
 ]
 
 [[package]]
@@ -5374,7 +5374,7 @@ checksum = "bb97012beadd29e654708a0fdb4c84bc046f537aecfde2c3ee0a9e4b4d48c725"
 dependencies = [
  "async-broadcast",
  "async-executor",
-    "async-fs 2.1.2",
+ "async-fs 2.1.2",
  "async-io 2.4.0",
  "async-lock 3.4.0",
  "async-process",
@@ -5412,7 +5412,7 @@ checksum = "1162094dc63b1629fcc44150bcceeaa80798cd28bcbe7fa987b65a034c258608"
 dependencies = [
  "async-broadcast",
  "async-executor",
-    "async-fs 2.1.2",
+ "async-fs 2.1.2",
  "async-io 2.4.0",
  "async-lock 3.4.0",
  "async-process",

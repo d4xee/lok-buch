@@ -1,4 +1,4 @@
-use crate::ui;
+use crate::frontend;
 use std::cmp::Ordering;
 
 #[derive(Clone, Debug, Eq, Hash)]
@@ -57,7 +57,7 @@ impl PreviewLok {
             address.to_string()
         }
         else {
-            ui::NO_DATA_AVAILABLE_TEXT.to_string()
+            frontend::NO_DATA_AVAILABLE_TEXT.to_string()
         }
     }
 
@@ -66,7 +66,7 @@ impl PreviewLok {
             name
         }
         else {
-            ui::NO_DATA_AVAILABLE_TEXT.to_string()
+            frontend::NO_DATA_AVAILABLE_TEXT.to_string()
         }
     }
 
@@ -75,7 +75,7 @@ impl PreviewLok {
             lokmaus_name
         }
         else {
-            ui::NO_DATA_AVAILABLE_TEXT.to_string()
+            frontend::NO_DATA_AVAILABLE_TEXT.to_string()
         }
     }
 }
