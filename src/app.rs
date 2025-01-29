@@ -9,8 +9,8 @@ use crate::app::state::State;
 use crate::app::stored_data::StoredData;
 use crate::backend::resource_manager::LokResourceManager;
 use crate::backend::sqlite_backend::SQLiteBackend;
-use crate::frontend;
-use crate::frontend::widgets::header;
+use crate::ui;
+use crate::ui::widgets::header;
 use iced::widget::{button, checkbox, column, horizontal_space, image, row, text, text_input, vertical_space};
 use iced::{ContentFit, Element, Fill, Left, Task};
 use std::any::Any;
@@ -32,7 +32,7 @@ impl Lokbuch {
             page: Pages::Loading,
             state: State::default(),
             lok_resource_manager: LokResourceManager::default(),
-            moving_icon_frames: frontend::moving_icon_frames(),
+            moving_icon_frames: ui::moving_icon_frames(),
         },
          Task::perform(StoredData::init_backend(DB_URL), Message::Loaded))
     }
@@ -59,32 +59,32 @@ impl Lokbuch {
             column![
                 column!(
                 text("Bezeichnung")
-                    .size(frontend::HEADING_TEXT_SIZE)
+                    .size(ui::HEADING_TEXT_SIZE)
                     .align_x(Left)
-                    .font(frontend::font::bold_font()),
+                    .font(ui::font::bold_font()),
 
                 text_input("Bezeichnung", self.state.name_input.as_str())
                     .id("new-lok-name")
                     .on_input(Message::NameInputChanged)
                     .padding(15)
-                    .size(frontend::HEADING_TEXT_SIZE)
+                    .size(ui::HEADING_TEXT_SIZE)
                     .align_x(Left),
                 ),
                 vertical_space(),
 
                 column!(
                 text("Analog/Digital")
-                    .size(frontend::HEADING_TEXT_SIZE)
+                    .size(ui::HEADING_TEXT_SIZE)
                     .align_x(Left)
-                    .font(frontend::font::bold_font()),
+                    .font(ui::font::bold_font()),
 
                 checkbox("Analog", !self.state.has_decoder_input)
                     .on_toggle(Message::HasDecoderInputChanged)
-                    .text_size(frontend::HEADING_TEXT_SIZE),
+                    .text_size(ui::HEADING_TEXT_SIZE),
 
                 checkbox("Digital", self.state.has_decoder_input)
                     .on_toggle(Message::HasDecoderInputChanged)
-                    .text_size(frontend::HEADING_TEXT_SIZE),
+                    .text_size(ui::HEADING_TEXT_SIZE),
             ),
                 vertical_space(),
             ]
@@ -93,9 +93,9 @@ impl Lokbuch {
         let center_row = row![
             column!(
                 text("Adresse")
-                .size(frontend::HEADING_TEXT_SIZE)
+                .size(ui::HEADING_TEXT_SIZE)
                 .align_x(Left)
-                .font(frontend::font::bold_font()),
+                .font(ui::font::bold_font()),
 
                 text_input("Adresse", self.state.address_input.as_str())
                 .id("new-lok-address")
@@ -108,14 +108,14 @@ impl Lokbuch {
                     }
                  )
                 .padding(15)
-                .size(frontend::HEADING_TEXT_SIZE)
+                .size(ui::HEADING_TEXT_SIZE)
                 .align_x(Left),
             ),
             column![
                 text("LOKmaus-Anzeigename")
-                .size(frontend::HEADING_TEXT_SIZE)
+                .size(ui::HEADING_TEXT_SIZE)
                 .align_x(Left)
-                .font(frontend::font::bold_font()),
+                .font(ui::font::bold_font()),
 
                 text_input("LOKmaus-Name", self.state.lok_maus_name_input.as_str())
                 .id("new-lok-short-name")
@@ -128,7 +128,7 @@ impl Lokbuch {
                     }
                  )
                 .padding(15)
-                .size(frontend::HEADING_TEXT_SIZE)
+                .size(ui::HEADING_TEXT_SIZE)
                 .align_x(Left),
             ]
         ].spacing(20).padding(20);
@@ -136,37 +136,37 @@ impl Lokbuch {
         let lower_row = row![
             column![
                 text("Hersteller")
-                .size(frontend::HEADING_TEXT_SIZE)
+                .size(ui::HEADING_TEXT_SIZE)
                 .align_x(Left)
-                .font(frontend::font::bold_font()),
+                .font(ui::font::bold_font()),
 
                 text_input("Hersteller", self.state.producer_input.as_str())
                 .id("new-lok-producer")
                 .on_input(Message::ProducerInputChanged)
                 .padding(15)
-                .size(frontend::HEADING_TEXT_SIZE)
+                .size(ui::HEADING_TEXT_SIZE)
                 .align_x(Left),
             ],
             column!(
                 text("Bahnverwaltung")
-                .size(frontend::HEADING_TEXT_SIZE)
+                .size(ui::HEADING_TEXT_SIZE)
                 .align_x(Left)
-                .font(frontend::font::bold_font()),
+                .font(ui::font::bold_font()),
 
                 text_input("Bahnverwaltung", self.state.management_input.as_str())
                 .id("new-lok-management")
                 .on_input(Message::ManagementInputChanged)
                 .padding(15)
-                .size(frontend::HEADING_TEXT_SIZE)
+                .size(ui::HEADING_TEXT_SIZE)
                 .align_x(Left),
             )
         ].spacing(20).padding(20);
 
-        let add_button = button(text("Speichern").size(frontend::HEADING_TEXT_SIZE))
+        let add_button = button(text("Speichern").size(ui::HEADING_TEXT_SIZE))
             .on_press(message_on_finish)
             .padding(15);
 
-        let cancel_button = button(text("Abbrechen").size(frontend::HEADING_TEXT_SIZE))
+        let cancel_button = button(text("Abbrechen").size(ui::HEADING_TEXT_SIZE))
             .on_press(Message::Cancel)
             .padding(15);
 

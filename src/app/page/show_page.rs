@@ -2,8 +2,8 @@ use crate::app::message::Message;
 use crate::app::page::{Page, Pages};
 use crate::app::state::State;
 use crate::app::Lokbuch;
-use crate::frontend;
-use crate::frontend::widgets::header;
+use crate::ui;
+use crate::ui::widgets::header;
 use async_std::task;
 use iced::widget::{button, center, horizontal_space, row, text, text_input, vertical_space};
 use iced::{Center, Element, Fill, Task};
@@ -91,38 +91,38 @@ impl Page for ShowPage {
 
         let left_column = iced::widget::column!(
                     text("Adresse")
-                    .size(frontend::HEADING_TEXT_SIZE)
-                    .font(frontend::font::bold_font()),
+                    .size(ui::HEADING_TEXT_SIZE)
+                    .font(ui::font::bold_font()),
 
                     text!("{}", lok.get_address_pretty())
-                    .size(frontend::HEADING_TEXT_SIZE),
+                    .size(ui::HEADING_TEXT_SIZE),
 
                     vertical_space(),
 
                     text("Bezeichnung")
-                    .size(frontend::HEADING_TEXT_SIZE)
-                    .font(frontend::font::bold_font()),
+                    .size(ui::HEADING_TEXT_SIZE)
+                    .font(ui::font::bold_font()),
 
                     text!("{}", lok.name)
-                    .size(frontend::HEADING_TEXT_SIZE),
+                    .size(ui::HEADING_TEXT_SIZE),
 
                     vertical_space(),
 
                     text("Hersteller")
-                    .size(frontend::HEADING_TEXT_SIZE)
-                    .font(frontend::font::bold_font()),
+                    .size(ui::HEADING_TEXT_SIZE)
+                    .font(ui::font::bold_font()),
 
                     text!("{}", lok.get_producer_pretty())
-                    .size(frontend::HEADING_TEXT_SIZE),
+                    .size(ui::HEADING_TEXT_SIZE),
                 ).spacing(10);
 
         let right_column = iced::widget::column![
                     text("LOKmaus-Anzeigename")
-                    .size(frontend::HEADING_TEXT_SIZE)
-                    .font(frontend::font::bold_font()),
+                    .size(ui::HEADING_TEXT_SIZE)
+                    .font(ui::font::bold_font()),
 
                     text!("{}", lok.get_lokmaus_name_pretty())
-                    .size(frontend::HEADING_TEXT_SIZE),
+                    .size(ui::HEADING_TEXT_SIZE),
 
                     vertical_space(),
                     vertical_space(),
@@ -130,25 +130,25 @@ impl Page for ShowPage {
                     vertical_space(),
 
                     text("Bahnverwaltung")
-                    .size(frontend::HEADING_TEXT_SIZE)
-                    .font(frontend::font::bold_font()),
+                    .size(ui::HEADING_TEXT_SIZE)
+                    .font(ui::font::bold_font()),
 
                     text!("{}", lok.get_management_pretty())
-                    .size(frontend::HEADING_TEXT_SIZE)
+                    .size(ui::HEADING_TEXT_SIZE)
                 ].spacing(10);
 
 
-        let cancel_button = button(text("Abbrechen").size(frontend::HEADING_TEXT_SIZE))
+        let cancel_button = button(text("Abbrechen").size(ui::HEADING_TEXT_SIZE))
             .on_press(Message::Cancel)
             .padding(15);
 
-        let edit_button = button(row![frontend::font::edit_icon(), text("Bearbeiten").size(frontend::HEADING_TEXT_SIZE)].align_y(Center))
+        let edit_button = button(row![ui::font::edit_icon(), text("Bearbeiten").size(ui::HEADING_TEXT_SIZE)].align_y(Center))
             .on_press_with(move || {
                 Message::Edit(lokbuch.state.selected_lok_id.clone().unwrap())
             })
             .padding(15);
 
-        let remove_button = button(row![frontend::font::delete_icon(), text("Löschen").size(frontend::HEADING_TEXT_SIZE)].align_y(Center))
+        let remove_button = button(row![ui::font::delete_icon(), text("Löschen").size(ui::HEADING_TEXT_SIZE)].align_y(Center))
             .on_press_with(move || {
                 Message::Remove(lokbuch.state.selected_lok_id.clone().unwrap())
             })

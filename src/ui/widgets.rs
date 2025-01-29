@@ -1,6 +1,6 @@
 use crate::app::message::Message;
 use crate::backend::database::preview_lok::PreviewLok;
-use crate::frontend::{font, VIEW_NAME_TEXT_SIZE, VIEW_TITLE_TEXT_SIZE};
+use crate::ui::{font, VIEW_NAME_TEXT_SIZE, VIEW_TITLE_TEXT_SIZE};
 use iced::widget::{button, container, horizontal_space, row, text, vertical_space, Container};
 use iced::{Center, Element, Fill};
 

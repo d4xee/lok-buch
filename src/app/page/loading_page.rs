@@ -1,7 +1,7 @@
 use crate::app::message::Message;
 use crate::app::page::{Page, Pages};
 use crate::app::Lokbuch;
-use crate::frontend;
+use crate::ui;
 use iced::widget::{center, text};
 use iced::{Element, Task};
 
@@ -9,7 +9,7 @@ pub struct LoadingPage;
 
 impl Page for LoadingPage {
     fn update(&self, lokbuch: &mut Lokbuch, message: Message) -> Task<Message> {
-        lokbuch.moving_icon_frames = frontend::moving_icon_frames();
+        lokbuch.moving_icon_frames = ui::moving_icon_frames();
 
         match message {
             Message::Loaded(saved_data) => {

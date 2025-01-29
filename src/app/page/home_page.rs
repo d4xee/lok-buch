@@ -2,8 +2,8 @@ use crate::app::message::Message;
 use crate::app::page::{Page, Pages};
 use crate::app::state::State;
 use crate::app::Lokbuch;
-use crate::frontend;
-use crate::frontend::widgets::{header, preview_widget};
+use crate::ui;
+use crate::ui::widgets::{header, preview_widget};
 use async_std::task;
 use iced::widget::{button, container, horizontal_space, keyed_column, row, scrollable, text, text_input, vertical_space};
 use iced::{Center, Element, Fill, Task};
@@ -93,15 +93,15 @@ impl Page for HomePage {
             .id("lok-search")
             .on_input(Message::SearchInputChanged)
             .padding(15)
-            .size(frontend::HEADING_TEXT_SIZE)
+            .size(ui::HEADING_TEXT_SIZE)
             .align_x(Center);
 
 
-        let search_button = button(text("Suchen").size(frontend::HEADING_TEXT_SIZE))
+        let search_button = button(text("Suchen").size(ui::HEADING_TEXT_SIZE))
             .on_press(Message::Search)
             .padding(15);
 
-        let add_button = button(text("Neue Lok hinzufügen").size(frontend::HEADING_TEXT_SIZE))
+        let add_button = button(text("Neue Lok hinzufügen").size(ui::HEADING_TEXT_SIZE))
             .on_press(Message::Add)
             .padding(15);
 
@@ -110,20 +110,20 @@ impl Page for HomePage {
                     .width(10),
 
                     text("Adresse")
-                    .size(frontend::HEADING_TEXT_SIZE)
-                    .font(frontend::font::bold_font()),
+                    .size(ui::HEADING_TEXT_SIZE)
+                    .font(ui::font::bold_font()),
 
                     horizontal_space(),
 
                     text("LM-Name")
-                    .size(frontend::HEADING_TEXT_SIZE)
-                    .font(frontend::font::bold_font()),
+                    .size(ui::HEADING_TEXT_SIZE)
+                    .font(ui::font::bold_font()),
 
                     horizontal_space(),
 
                     text("Bezeichnung")
-                    .size(frontend::HEADING_TEXT_SIZE)
-                    .font(frontend::font::bold_font()),
+                    .size(ui::HEADING_TEXT_SIZE)
+                    .font(ui::font::bold_font()),
 
                     horizontal_space(),
 
