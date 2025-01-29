@@ -1,4 +1,4 @@
-use crate::frontend;
+use crate::ui;
 use std::cmp::Ordering;
 
 #[derive(Clone, Debug, Eq, Hash)]
@@ -55,12 +55,12 @@ impl PreviewLok {
     pub fn get_address_pretty(&self) -> String {
         if let Some(address) = self.address {
             if address < 0 {
-                frontend::NO_DATA_AVAILABLE_TEXT.to_string()
+                ui::NO_DATA_AVAILABLE_TEXT.to_string()
             } else {
                 address.to_string()
             }
         } else {
-            frontend::NO_DATA_AVAILABLE_TEXT.to_string()
+            ui::NO_DATA_AVAILABLE_TEXT.to_string()
         }
     }
 
@@ -69,7 +69,7 @@ impl PreviewLok {
             name
         }
         else {
-            frontend::NO_DATA_AVAILABLE_TEXT.to_string()
+            ui::NO_DATA_AVAILABLE_TEXT.to_string()
         }
     }
 
@@ -78,7 +78,7 @@ impl PreviewLok {
             lokmaus_name
         }
         else {
-            frontend::NO_DATA_AVAILABLE_TEXT.to_string()
+            ui::NO_DATA_AVAILABLE_TEXT.to_string()
         }
     }
 }
