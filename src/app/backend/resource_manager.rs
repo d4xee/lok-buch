@@ -1,4 +1,4 @@
-use crate::backend::Backend;
+use crate::app::backend::Backend;
 use crate::database::lok::Lok;
 use crate::database::preview_lok::PreviewLok;
 use crate::database::DatabaseError;
@@ -144,8 +144,8 @@ impl<BE: Backend> Debug for LokResourceManager<BE> {
 #[cfg(test)]
 mod lok_resource_manager_tests {
     use super::*;
-    use crate::backend::sqlite_backend::SQLiteBackend;
-    use crate::backend::test;
+    use crate::app::backend::sqlite_backend::SQLiteBackend;
+    use crate::app::backend::test;
     use async_std::task;
 
     #[test]

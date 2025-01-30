@@ -1,8 +1,8 @@
-use crate::backend::database::lok::Lok;
-use crate::backend::database::preview_lok::PreviewLok;
-use crate::backend::database::sqlite_db::SQLiteDB;
-use crate::backend::database::{Database, DatabaseError};
-use crate::backend::Backend;
+use crate::app::backend::database::lok::Lok;
+use crate::app::backend::database::preview_lok::PreviewLok;
+use crate::app::backend::database::sqlite_db::SQLiteDB;
+use crate::app::backend::database::{Database, DatabaseError};
+use crate::app::backend::Backend;
 use sqlx::{Pool, Sqlite};
 
 /// Backend implementation for a SQLite database
@@ -98,7 +98,7 @@ impl Backend for SQLiteBackend {
 #[cfg(test)]
 mod sqlite_backend_tests {
     use super::*;
-    use crate::backend::test;
+    use crate::app::backend::test;
     use async_std::task;
 
     #[test]

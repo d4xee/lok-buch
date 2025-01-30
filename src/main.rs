@@ -1,9 +1,8 @@
-mod ui;
 mod app;
-mod backend;
 
 use crate::app::Lokbuch;
-use crate::backend::database;
+use app::backend::database;
+use app::ui;
 
 /// Starting point of the application
 fn main() -> iced::Result {
