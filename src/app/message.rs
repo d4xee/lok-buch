@@ -21,4 +21,5 @@ pub enum Message {
     Edit(u32),
     InputFailure(MessageDialogResult),
     EditLok,
+    Settings,
 }
