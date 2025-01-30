@@ -1,9 +1,9 @@
 use crate::app::message::Message;
 use crate::app::page::{Page, Pages};
 use crate::app::state::State;
+use crate::app::ui;
+use crate::app::ui::widgets::{header, preview_widget};
 use crate::app::Lokbuch;
-use crate::ui;
-use crate::ui::widgets::{header, preview_widget};
 use async_std::task;
 use iced::widget::{button, container, horizontal_space, keyed_column, row, scrollable, text, text_input, vertical_space};
 use iced::{Center, Element, Fill, Task};

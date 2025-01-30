@@ -1,5 +1,6 @@
 use crate::app::message::Message;
 use crate::app::page::{Page, Pages};
+use crate::app::ui::widgets::lok_data_input_mask;
 use crate::app::Lokbuch;
 use async_std::task;
 use iced::{Element, Task};
@@ -33,6 +34,6 @@ impl Page for AddPage {
     }
 
     fn view<'a>(&self, lokbuch: &'a Lokbuch) -> Element<'a, Message> {
-        lokbuch.lok_data_input_mask(String::from("Hinzufügen"), Message::AddNewLok)
+        lok_data_input_mask(lokbuch, String::from("Hinzufügen"), Message::AddNewLok)
     }
 }

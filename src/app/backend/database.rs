@@ -48,7 +48,7 @@ pub async fn connect() -> Result<Pool<Sqlite>, Error> {
 
 pub async fn migrate(db: &Pool<Sqlite>) {
     let crate_dir = std::env::current_dir().unwrap();
-    let migrations = std::path::Path::new(&crate_dir).join("./migrations");
+    let migrations = std::path::Path::new(&crate_dir).join("../../../migrations");
 
     let migration_results = sqlx::migrate::Migrator::new(migrations)
         .await

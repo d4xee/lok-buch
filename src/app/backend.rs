@@ -1,6 +1,6 @@
-use crate::backend::database::lok::Lok;
-use crate::backend::database::preview_lok::PreviewLok;
-use crate::backend::database::DatabaseError;
+use crate::app::backend::database::lok::Lok;
+use crate::app::backend::database::preview_lok::PreviewLok;
+use crate::app::backend::database::DatabaseError;
 use std::fmt::Debug;
 
 pub mod database;

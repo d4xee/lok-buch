@@ -1,5 +1,5 @@
+use crate::app::ui;
 use crate::database::preview_lok::PreviewLok;
-use crate::ui;
 
 #[derive(Clone, Debug, Hash, Ord, PartialOrd, Eq, PartialEq)]
 pub struct Lok {

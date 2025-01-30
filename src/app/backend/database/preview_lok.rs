@@ -1,4 +1,4 @@
-use crate::ui;
+use crate::app::ui;
 use std::cmp::Ordering;
 
 #[derive(Clone, Debug, Eq, Hash)]

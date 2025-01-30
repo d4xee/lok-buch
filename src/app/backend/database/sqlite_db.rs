@@ -12,7 +12,7 @@ impl SQLiteDB {
     async fn migrate(connection: Pool<Sqlite>) -> Result<(), DatabaseError> {
         // sqlite migrations
         let crate_dir = std::env::current_dir().unwrap();
-        let migrations = std::path::Path::new(&crate_dir).join("./migrations");
+        let migrations = std::path::Path::new(&crate_dir).join("../../../../migrations");
 
         let migration_results = sqlx::migrate::Migrator::new(migrations)
             .await
@@ -84,7 +84,7 @@ impl Database for SQLiteDB {
 #[cfg(test)]
 mod sqlite_db_tests {
     use super::*;
-    use crate::backend::test;
+    use crate::app::backend::test;
     use async_std::task;
     use std::time::Duration;
 
