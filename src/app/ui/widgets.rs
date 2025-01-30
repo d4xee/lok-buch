@@ -3,14 +3,15 @@ use crate::app::message::Message;
 use crate::app::ui::{font, VIEW_NAME_TEXT_SIZE, VIEW_TITLE_TEXT_SIZE};
 use crate::app::{ui, Lokbuch};
 use iced::widget::{button, checkbox, column, container, horizontal_space, image, row, text, text_input, vertical_space, Container};
-use iced::{Center, ContentFit, Element, Fill, Left};
+use iced::{Center, ContentFit, Element, Fill, FillPortion, Left};
 
 pub fn header<'a>(name: String) -> Element<'a, Message> {
-    iced::widget::column!(
+    container(
+        iced::widget::column!(
         text("LOKBUCH")
             .width(Fill)
             .size(VIEW_TITLE_TEXT_SIZE)
-            .color([0.5, 0.5, 0.5])
+            .color([0.3, 0.3, 0.5])
             .align_x(Center)
             .font(font::bold_font()),
 
@@ -23,10 +24,10 @@ pub fn header<'a>(name: String) -> Element<'a, Message> {
         vertical_space()
         .height(15)
     )
-        .spacing(20)
-        .width(Fill)
-        .align_x(Center)
-        .into()
+            .spacing(20)
+            .width(Fill)
+            .align_x(Center)
+    ).style(container::bordered_box).into()
 }
 
 /// Returns an inputted PreviewLok as a custom widget.
@@ -77,8 +78,6 @@ pub fn preview_widget<'a>(preview_data: PreviewLok) -> Container<'a, Message> {
 /// Layouts the input mask for adding and editing a Lok.
 /// The message on finish is emitted when the save button was pressed.
 pub fn lok_data_input_mask(lokbuch: &Lokbuch, header_text: String, message_on_finish: Message) -> Element<Message> {
-    let header = header(header_text);
-
     let upper_row = row![
             button(image("res/images/blue.png").width(400).content_fit(ContentFit::Cover)).style(button::text),
             column![
@@ -187,16 +186,13 @@ pub fn lok_data_input_mask(lokbuch: &Lokbuch, header_text: String, message_on_fi
             )
         ].spacing(20).padding(20);
 
-    let add_button = button(text("Speichern").size(ui::HEADING_TEXT_SIZE))
+    let add_button = button(text("Speichern"))
         .on_press(message_on_finish)
-        .padding(15);
+        .padding(15)
+        .width(Fill);
 
-    let cancel_button = button(text("Abbrechen").size(ui::HEADING_TEXT_SIZE))
-        .on_press(Message::Cancel)
-        .padding(15);
-
-    column![
-            header,
+    let content = container(
+        column![
             column![
                 column![
                     upper_row,
@@ -209,12 +205,50 @@ pub fn lok_data_input_mask(lokbuch: &Lokbuch, header_text: String, message_on_fi
                     vertical_space()
                 ]
             ].height(Fill),
-            row![
-                horizontal_space(),
-                add_button,
-                horizontal_space(),
-                cancel_button,
-                horizontal_space(),
-            ],
-        ].width(Fill).into()
+        ].width(Fill)
+    );
+
+    page_layout(header_text, column![add_button], content, true)
+}
+
+pub fn sidebar(buttons: iced::widget::Column<Message>, has_cancel_button: bool) -> Element<Message> {
+    let side_column = column![];
+
+    let side_column = side_column.push(if has_cancel_button {
+        column![
+            button(text("Abbrechen"))
+            .on_press(Message::Cancel)
+            .padding(15)
+            .width(Fill),
+            buttons.width(Fill).spacing(20)
+        ].spacing(20)
+    } else {
+        buttons.width(Fill).spacing(20)
+    });
+
+    container(
+        column![
+            side_column,
+            vertical_space().height(Fill),
+            button(text!("Einstellungen"))
+            .on_press(Message::Settings)
+            .width(Fill)
+            .padding(15),
+        ].spacing(20)
+    )
+        .padding(15)
+        .style(container::rounded_box)
+        .height(Fill)
+        .width(FillPortion(1))
+        .into()
+}
+
+pub fn page_layout<'a>(title: String, sidebar_buttons: iced::widget::Column<'a, Message>, content: Container<'a, Message>, has_cancel_button: bool) -> Element<'a, Message> {
+    column![
+        header(title),
+        row![
+            content.width(FillPortion(7)),
+            sidebar(sidebar_buttons, has_cancel_button),
+        ]
+    ].into()
 }

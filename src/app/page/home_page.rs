@@ -2,11 +2,11 @@ use crate::app::message::Message;
 use crate::app::page::{Page, Pages};
 use crate::app::state::State;
 use crate::app::ui;
-use crate::app::ui::widgets::{header, preview_widget};
+use crate::app::ui::widgets::{header, page_layout, preview_widget};
 use crate::app::Lokbuch;
 use async_std::task;
-use iced::widget::{button, container, horizontal_space, keyed_column, row, scrollable, text, text_input, vertical_space};
-use iced::{Center, Element, Fill, Task};
+use iced::widget::{button, column, container, horizontal_space, keyed_column, row, scrollable, text, text_input, vertical_space};
+use iced::{Center, Element, Fill, FillPortion, Task};
 
 pub struct HomePage;
 
@@ -78,6 +78,10 @@ impl Page for HomePage {
                 lokbuch.change_page_to(Pages::Home);
             }
 
+            Message::Settings => {
+                lokbuch.change_page_to(Pages::Settings);
+            }
+
             _ => {}
         }
         Task::none()
@@ -101,9 +105,10 @@ impl Page for HomePage {
             .on_press(Message::Search)
             .padding(15);
 
-        let add_button = button(text("Neue Lok hinzufügen").size(ui::HEADING_TEXT_SIZE))
+        let add_button = button(text("Neue Lok"))
             .on_press(Message::Add)
-            .padding(15);
+            .padding(15)
+            .width(Fill);
 
         let text_row = row![
                     horizontal_space()
@@ -147,8 +152,14 @@ impl Page for HomePage {
             })
         ).width(Fill);
 
-        let content = iced::widget::column![header, row![input_search, search_button], add_button, text_row, scrollable(container(loks))].align_x(Center).spacing(20).width(Fill);
+        let content = container(
+            column!(
+                row![input_search, search_button],
+                text_row,
+                scrollable(container(loks))
+            ).align_x(Center).spacing(20).width(FillPortion(7))
+        ).padding(10);
 
-        content.into()
+        page_layout(format!("{} Loks vorhanden", num_of_loks), column![add_button], content, false)
     }
 }

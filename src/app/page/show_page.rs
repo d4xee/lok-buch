@@ -2,10 +2,10 @@ use crate::app::message::Message;
 use crate::app::page::{Page, Pages};
 use crate::app::state::State;
 use crate::app::ui;
-use crate::app::ui::widgets::header;
+use crate::app::ui::widgets::page_layout;
 use crate::app::Lokbuch;
 use async_std::task;
-use iced::widget::{button, center, horizontal_space, row, text, text_input, vertical_space};
+use iced::widget::{button, container, horizontal_space, row, text, text_input, vertical_space};
 use iced::{Center, Element, Fill, Task};
 
 pub struct ShowPage;
@@ -87,8 +87,6 @@ impl Page for ShowPage {
         let mut lrm = lokbuch.lok_resource_manager.clone();
         let lok = task::block_on(lrm.get_lok(lokbuch.state.selected_lok_id.unwrap())).expect("lok not found"); // TODO async show
 
-        let header = header(format!("{}", lok.name));
-
         let left_column = iced::widget::column!(
                     text("Adresse")
                     .size(ui::HEADING_TEXT_SIZE)
@@ -137,41 +135,36 @@ impl Page for ShowPage {
                     .size(ui::HEADING_TEXT_SIZE)
                 ].spacing(10);
 
-
-        let cancel_button = button(text("Abbrechen").size(ui::HEADING_TEXT_SIZE))
-            .on_press(Message::Cancel)
-            .padding(15);
-
-        let edit_button = button(row![ui::font::edit_icon(), text("Bearbeiten").size(ui::HEADING_TEXT_SIZE)].align_y(Center))
+        let edit_button = button(row![ui::font::edit_icon(), text("Bearbeiten")].spacing(5).align_y(Center))
             .on_press_with(move || {
                 Message::Edit(lokbuch.state.selected_lok_id.clone().unwrap())
             })
-            .padding(15);
+            .padding(15)
+            .width(Fill);
 
-        let remove_button = button(row![ui::font::delete_icon(), text("Löschen").size(ui::HEADING_TEXT_SIZE)].align_y(Center))
+        let remove_button = button(row![ui::font::delete_icon(), text("Löschen")].spacing(5).align_y(Center))
             .on_press_with(move || {
                 Message::Remove(lokbuch.state.selected_lok_id.clone().unwrap())
             })
             .style(button::danger)
-            .padding(15);
+            .padding(15)
+            .width(Fill);
 
-        iced::widget::column![
-                    header,
-                    row![
-                        horizontal_space(),
-                        left_column,
-                        horizontal_space(),
-                        right_column,
-                        horizontal_space(),
-                    ].width(Fill).height(Fill),
-                    center(row![
-                        horizontal_space(),
-                        edit_button,
-                        horizontal_space(),
-                        remove_button,
-                        horizontal_space(),
-                        cancel_button,
-                        horizontal_space(),
-                    ])].width(Fill).into()
+        let content = container(
+            iced::widget::column![
+                row![
+                    horizontal_space(),
+                    left_column,
+                    horizontal_space(),
+                    right_column,
+                    horizontal_space(),
+                ].width(Fill).height(Fill)
+            ].width(Fill)
+        );
+
+        page_layout(format!("{}", lok.name), iced::widget::column![
+            edit_button,
+            remove_button,
+        ], content, true)
     }
 }
