@@ -19,12 +19,9 @@ impl Page for HomePage {
             }
 
             Message::SearchInputChanged(search_input) => {
-                lokbuch.state.search_input = search_input;
-            }
+                lokbuch.state.search_input = search_input.clone();
 
-            Message::Search => {
-                println!("Search pressed!");
-                //implement search by creating a search string made of address, LMname and name
+                lokbuch.lok_resource_manager.search_and_store_previews_containing(search_input);
             }
 
             Message::ShowLok(id) => {
@@ -34,10 +31,6 @@ impl Page for HomePage {
                 };
 
                 lokbuch.change_page_to(Pages::Show);
-            }
-
-            Message::Cancel => {
-                lokbuch.change_page_to(Pages::Home);
             }
 
             Message::Edit(id) => {
@@ -79,6 +72,10 @@ impl Page for HomePage {
             }
 
             Message::Settings => {
+                lokbuch.state = State {
+                    ..State::default()
+                };
+
                 lokbuch.change_page_to(Pages::Settings);
             }
 
@@ -99,11 +96,6 @@ impl Page for HomePage {
             .padding(15)
             .size(ui::HEADING_TEXT_SIZE)
             .align_x(Center);
-
-
-        let search_button = button(text("Suchen").size(ui::HEADING_TEXT_SIZE))
-            .on_press(Message::Search)
-            .padding(15);
 
         let add_button = button(text("Neue Lok"))
             .on_press(Message::Add)
@@ -137,24 +129,44 @@ impl Page for HomePage {
                     horizontal_space()
                 ];
 
-        let loks = keyed_column(
-            previews.into_iter().map(move |item| {
-                let preview = item.clone();
-                (0, iced::widget::column!(
+        let loks =
+            if lokbuch.state.search_input.is_empty() {
+                keyed_column(
+                    previews.into_iter().map(move |item| {
+                        let preview = item.clone();
+                        (0, iced::widget::column!(
                         button(preview_widget(preview.clone()))
                         .style(button::text)
                         .on_press_with(move || {
                             Message::ShowLok(item.clone().get_id())
                         }),
                         vertical_space()
-                        .height(10))
-                    .into())
-            })
-        ).width(Fill);
+                            .height(10))
+                            .into())
+                    })
+                ).width(Fill)
+            } else {
+                keyed_column(
+                    lokbuch.lok_resource_manager.get_search_results_for(lokbuch.state.search_input.clone())
+                        .into_iter().map(move |item| {
+                        let preview = item.clone();
+                        (0, iced::widget::column!(
+                        button(preview_widget(preview.clone()))
+                        .style(button::text)
+                        .on_press_with(move || {
+                            Message::ShowLok(item.clone().get_id())
+                        }),
+                        vertical_space()
+                            .height(10))
+                            .into())
+                    })
+                ).width(Fill)
+            };
+
 
         let content = container(
             column!(
-                row![input_search, search_button],
+                input_search,
                 text_row,
                 scrollable(container(loks))
             ).align_x(Center).spacing(20).width(FillPortion(7))

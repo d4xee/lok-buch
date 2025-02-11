@@ -15,7 +15,6 @@ pub enum Message {
     Add,
     AddNewLok,
     Saved(u32),
-    Search,
     Cancel,
     ShowLok(u32),
     Edit(u32),
