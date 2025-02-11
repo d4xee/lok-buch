@@ -7,6 +7,7 @@ pub struct PreviewLok {
     address: Option<i32>,
     name: Option<String>,
     lokmaus_name: Option<String>,
+    search_text: String,
 }
 
 #[derive(sqlx::FromRow)]
@@ -19,11 +20,21 @@ pub struct PreviewData {
 
 impl PreviewLok {
     pub(crate) fn new(id: u32, address: Option<i32>, name: Option<String>, lokmaus_name: Option<String>) -> Self {
+        let address_text = address.unwrap_or(-1);
+        let address_text = if address_text < 0 { "".to_string() } else { address_text.to_string() };
         Self {
             id,
             address,
-            name,
-            lokmaus_name,
+            name: name.clone(),
+            lokmaus_name: lokmaus_name.clone(),
+            search_text: String::from(
+                format!(
+                    "{} {} {}",
+                    address_text,
+                    name.unwrap_or("".to_string()),
+                    lokmaus_name.unwrap_or("".to_string())
+                )
+            ),
         }
     }
 
@@ -32,7 +43,7 @@ impl PreviewLok {
             data.id as u32,
             if data.address < 0 { None } else { Some(data.address) },
             if data.name.is_empty() { None } else { Some(data.name.clone()) },
-            if data.lokmaus_name.is_empty() { None  } else { Some(data.lokmaus_name.clone()) }
+            if data.lokmaus_name.is_empty() { None } else { Some(data.lokmaus_name.clone()) },
         )
     }
 
@@ -67,8 +78,7 @@ impl PreviewLok {
     pub fn get_name_pretty(&self) -> String {
         if let Some(name) = self.name.clone() {
             name
-        }
-        else {
+        } else {
             ui::NO_DATA_AVAILABLE_TEXT.to_string()
         }
     }
@@ -76,10 +86,13 @@ impl PreviewLok {
     pub fn get_lokmaus_name_pretty(&self) -> String {
         if let Some(lokmaus_name) = self.lokmaus_name.clone() {
             lokmaus_name
-        }
-        else {
+        } else {
             ui::NO_DATA_AVAILABLE_TEXT.to_string()
         }
+    }
+
+    pub fn get_search_string(&self) -> String {
+        self.search_text.clone()
     }
 }
 

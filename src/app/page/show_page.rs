@@ -22,20 +22,6 @@ impl Page for ShowPage {
                 lokbuch.state.search_input = search_input;
             }
 
-            Message::Search => {
-                println!("Search pressed!");
-                //implement search by creating a search string made of address, LMname and name
-            }
-
-            Message::ShowLok(id) => {
-                lokbuch.state = State {
-                    selected_lok_id: Some(id),
-                    ..State::default()
-                };
-
-                lokbuch.change_page_to(Pages::Show);
-            }
-
             Message::Cancel => {
                 lokbuch.change_page_to(Pages::Home);
             }

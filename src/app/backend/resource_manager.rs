@@ -12,6 +12,7 @@ pub struct LokResourceManager<BE: Backend> {
     backend: BE,
     cache: HashMap<u32, Lok>,
     preview_cache: Vec<PreviewLok>,
+    search_results: Vec<PreviewLok>,
 }
 
 impl<BE: Backend> LokResourceManager<BE>
@@ -27,6 +28,7 @@ impl<BE: Backend> LokResourceManager<BE>
             backend: backend.clone(),
             cache: HashMap::new(),
             preview_cache,
+            search_results: Vec::new(),
         })
     }
 
@@ -118,6 +120,21 @@ impl<BE: Backend> LokResourceManager<BE>
     pub fn number_of_loks(&self) -> u32 {
         self.preview_cache.len() as u32
     }
+
+    /// Stores every PreviewLok that matches with the given search string
+    pub fn search_and_store_previews_containing(&mut self, search: String) {
+        self.search_results = self.preview_cache
+            .iter()
+            .filter(|preview_lok| { preview_lok.get_search_string().contains(search.as_str()) })
+            .map(|preview_lok| { preview_lok.clone() })
+            .collect::<Vec<PreviewLok>>()
+            .into();
+    }
+
+    /// Returns every PreviewLok that matches with the given search string
+    pub fn get_search_results_for(&self, search: String) -> Vec<PreviewLok> {
+        self.search_results.clone()
+    }
 }
 
 impl<BE: Backend> Default for LokResourceManager<BE> {
@@ -126,6 +143,7 @@ impl<BE: Backend> Default for LokResourceManager<BE> {
             backend: BE::default(),
             cache: HashMap::default(),
             preview_cache: Vec::default(),
+            search_results: Vec::default(),
         }
     }
 }
