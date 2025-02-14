@@ -89,14 +89,14 @@ impl Page for HomePage {
         let num_of_loks = lokbuch.lok_resource_manager.number_of_loks();
         let mut previews = lokbuch.lok_resource_manager.get_all_previews().clone();
 
-        let input_search = text_input("Suchen...", lokbuch.state.search_input.as_str())
+        let input_search = text_input(t!("home.search").to_string().as_str(), lokbuch.state.search_input.as_str())
             .id("lok-search")
             .on_input(Message::SearchInputChanged)
             .padding(15)
             .size(ui::HEADING_TEXT_SIZE)
             .align_x(Center);
 
-        let add_button = button(button_decorations("Neue Lok".to_string(), SvgIcon::Plus))
+        let add_button = button(button_decorations(t!("home.new_loco").to_string(), SvgIcon::Plus))
             .on_press(Message::Add)
             .padding(15)
             .width(Fill);
@@ -105,19 +105,19 @@ impl Page for HomePage {
                     horizontal_space()
                     .width(10),
 
-                    text("Adresse")
+                    text(t!("home.address"))
                     .size(ui::HEADING_TEXT_SIZE)
                     .font(ui::font::bold_font()),
 
                     horizontal_space(),
 
-                    text("LM-Name")
+                    text(t!("home.lm_name"))
                     .size(ui::HEADING_TEXT_SIZE)
                     .font(ui::font::bold_font()),
 
                     horizontal_space(),
 
-                    text("Bezeichnung")
+                    text(t!("home.name"))
                     .size(ui::HEADING_TEXT_SIZE)
                     .font(ui::font::bold_font()),
 
@@ -171,6 +171,6 @@ impl Page for HomePage {
             ).align_x(Center).spacing(20).width(FillPortion(7))
         ).padding(10);
 
-        page_layout(format!("{} Loks vorhanden", num_of_loks), column![add_button], content, false)
+        page_layout(t!("home.locos_available", num=num_of_loks).to_string(), column![add_button], content, false)
     }
 }

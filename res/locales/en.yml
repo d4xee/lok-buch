@@ -1,0 +1,41 @@
+home:
+  address: "Address"
+  lm_name: "LM-name"
+  locos_available: "%{num} locos available"
+  name: "Name"
+  new_loco: "New Loco"
+  search: "Search..."
+
+add:
+  add: "Add new Loco"
+
+edit:
+  edit: "Edit Loco"
+
+loading:
+  loading: "Loading..."
+
+settings:
+  settings: "Settings"
+
+show:
+  address: "Address"
+  delete: "Delete"
+  edit: "Edit"
+  lm_name: "LOKmaus Name"
+  management: "Management"
+  name: "Name"
+  producer: "Producer"
+
+ui:
+  address: "Address"
+  analogue: "Analogue"
+  analogue_digital: "Analogue/Digital"
+  cancel: "Cancel"
+  digital: "Digital"
+  lm_name: "LOKmaus Name"
+  management: "Management"
+  name: "Name"
+  producer: "Producer"
+  save: "Save"
+  settings: "Settings"

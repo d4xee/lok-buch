@@ -24,7 +24,7 @@ impl Page for LoadingPage {
     fn view<'a>(&self, lokbuch: &'a Lokbuch) -> Element<'a, Message> {
         center(iced::widget::column![
                     iced_gif::Gif::new(&lokbuch.moving_icon_frames),
-                    text("Laden...").size(50)])
+                    text(t!("loading.loading")).size(50)])
             .into()
     }
 }

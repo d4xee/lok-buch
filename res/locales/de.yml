@@ -1,0 +1,41 @@
+home:
+  address: "Addresse"
+  lm_name: "LM-Name"
+  locos_available: "%{num} Loks verfügbar"
+  name: "Name"
+  new_loco: "Neue Lok"
+  search: "Suchen..."
+
+add:
+  add: "Hinzufügen"
+
+edit:
+  edit: "Bearbeiten"
+
+loading:
+  loading: "Laden..."
+
+settings:
+  settings: "Einstellungen"
+
+show:
+  address: "Addresse"
+  delete: "Löschen"
+  edit: "Bearbeiten"
+  lm_name: "LOKmaus-Name"
+  management: "Bahnverwaltung"
+  name: "Name"
+  producer: "Hersteller"
+
+ui:
+  address: "Addresse"
+  analogue: "Analog"
+  analogue_digital: "Analog/Digital"
+  cancel: "Abbrechen"
+  digital: "Digital"
+  lm_name: "LOKmaus-Name"
+  management: "Bahnverwaltung"
+  name: "Name"
+  producer: "Hersteller"
+  save: "Speichern"
+  settings: "Einstellungen"
