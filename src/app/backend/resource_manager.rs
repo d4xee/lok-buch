@@ -131,8 +131,8 @@ impl<BE: Backend> LokResourceManager<BE>
             .into();
     }
 
-    /// Returns every PreviewLok that matches with the given search string
-    pub fn get_search_results_for(&self, search: String) -> Vec<PreviewLok> {
+    /// Returns every PreviewLok that matches with the previously given search string
+    pub fn get_search_results(&self) -> Vec<PreviewLok> {
         self.search_results.clone()
     }
 }

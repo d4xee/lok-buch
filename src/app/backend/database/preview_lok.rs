@@ -7,7 +7,7 @@ pub struct PreviewLok {
     address: Option<i32>,
     name: Option<String>,
     lokmaus_name: Option<String>,
-    search_text: String,
+    search_index: String,
 }
 
 #[derive(sqlx::FromRow)]
@@ -27,14 +27,14 @@ impl PreviewLok {
             address,
             name: name.clone(),
             lokmaus_name: lokmaus_name.clone(),
-            search_text: String::from(
+            search_index: String::from(
                 format!(
                     "{} {} {}",
                     address_text,
                     name.unwrap_or("".to_string()),
                     lokmaus_name.unwrap_or("".to_string())
                 )
-            ),
+            ).to_lowercase(),
         }
     }
 
@@ -92,7 +92,7 @@ impl PreviewLok {
     }
 
     pub fn get_search_string(&self) -> String {
-        self.search_text.clone()
+        self.search_index.clone()
     }
 }
 
