@@ -2,11 +2,12 @@ use crate::app::message::Message;
 use crate::app::page::{Page, Pages};
 use crate::app::state::State;
 use crate::app::ui;
-use crate::app::ui::widgets::page_layout;
+use crate::app::ui::widgets::{button_decorations, page_layout};
+use crate::app::ui::SvgIcon;
 use crate::app::Lokbuch;
 use async_std::task;
 use iced::widget::{button, container, horizontal_space, row, text, text_input, vertical_space};
-use iced::{Center, Element, Fill, Task};
+use iced::{Element, Fill, Task};
 
 pub struct ShowPage;
 
@@ -16,10 +17,6 @@ impl Page for ShowPage {
             Message::Add => {
                 lokbuch.change_page_to(Pages::Add);
                 return text_input::focus("new-lok-name");
-            }
-
-            Message::SearchInputChanged(search_input) => {
-                lokbuch.state.search_input = search_input;
             }
 
             Message::Cancel => {
@@ -121,14 +118,14 @@ impl Page for ShowPage {
                     .size(ui::HEADING_TEXT_SIZE)
                 ].spacing(10);
 
-        let edit_button = button(row![ui::font::edit_icon(), text("Bearbeiten")].spacing(5).align_y(Center))
+        let edit_button = button(button_decorations("Bearbeiten".to_string(), SvgIcon::Edit))
             .on_press_with(move || {
                 Message::Edit(lokbuch.state.selected_lok_id.clone().unwrap())
             })
             .padding(15)
             .width(Fill);
 
-        let remove_button = button(row![ui::font::delete_icon(), text("Löschen")].spacing(5).align_y(Center))
+        let remove_button = button(button_decorations("Löschen".to_string(), SvgIcon::Trash))
             .on_press_with(move || {
                 Message::Remove(lokbuch.state.selected_lok_id.clone().unwrap())
             })

@@ -1,8 +1,8 @@
 use crate::app::backend::database::preview_lok::PreviewLok;
 use crate::app::message::Message;
-use crate::app::ui::{font, VIEW_NAME_TEXT_SIZE, VIEW_TITLE_TEXT_SIZE};
+use crate::app::ui::{font, SvgIcon, VIEW_NAME_TEXT_SIZE, VIEW_TITLE_TEXT_SIZE};
 use crate::app::{ui, Lokbuch};
-use iced::widget::{button, checkbox, column, container, horizontal_space, image, row, text, text_input, vertical_space, Container};
+use iced::widget::{button, checkbox, column, container, horizontal_space, image, row, svg, text, text_input, vertical_space, Container};
 use iced::{Center, ContentFit, Element, Fill, FillPortion, Left};
 
 pub fn header<'a>(name: String) -> Element<'a, Message> {
@@ -216,9 +216,9 @@ pub fn sidebar(buttons: iced::widget::Column<Message>, has_cancel_button: bool) 
 
     let side_column = side_column.push(if has_cancel_button {
         column![
-            button(text("Abbrechen"))
+            button(button_decorations(String::from("Abbrechen"), SvgIcon::Back))
             .on_press(Message::Cancel)
-            .padding(15)
+            .padding(13)
             .width(Fill),
             buttons.width(Fill).spacing(20)
         ].spacing(20)
@@ -230,7 +230,7 @@ pub fn sidebar(buttons: iced::widget::Column<Message>, has_cancel_button: bool) 
         column![
             side_column,
             vertical_space().height(Fill),
-            button(text!("Einstellungen"))
+            button(button_decorations("Einstellungen".to_string(), SvgIcon::Gear))
             .on_press(Message::Settings)
             .width(Fill)
             .padding(15),
@@ -251,4 +251,11 @@ pub fn page_layout<'a>(title: String, sidebar_buttons: iced::widget::Column<'a, 
             sidebar(sidebar_buttons, has_cancel_button),
         ]
     ].into()
+}
+
+pub fn button_decorations<'a>(text_: String, icon: SvgIcon) -> Element<'a, Message> {
+    row![
+        svg(icon.get_file_path()).height(ui::SVG_ICON_HEIGHT).width(FillPortion(1)).content_fit(ContentFit::Cover),
+        text(text_).width(FillPortion(5)).align_y(Center),
+    ].spacing(10).into()
 }

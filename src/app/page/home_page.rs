@@ -2,7 +2,8 @@ use crate::app::message::Message;
 use crate::app::page::{Page, Pages};
 use crate::app::state::State;
 use crate::app::ui;
-use crate::app::ui::widgets::{header, page_layout, preview_widget};
+use crate::app::ui::widgets::{button_decorations, page_layout, preview_widget};
+use crate::app::ui::SvgIcon;
 use crate::app::Lokbuch;
 use async_std::task;
 use iced::widget::{button, column, container, horizontal_space, keyed_column, row, scrollable, text, text_input, vertical_space};
@@ -21,7 +22,7 @@ impl Page for HomePage {
             Message::SearchInputChanged(search_input) => {
                 lokbuch.state.search_input = search_input.clone();
 
-                lokbuch.lok_resource_manager.search_and_store_previews_containing(search_input);
+                lokbuch.lok_resource_manager.search_and_store_previews_containing(search_input.to_lowercase());
             }
 
             Message::ShowLok(id) => {
@@ -88,8 +89,6 @@ impl Page for HomePage {
         let num_of_loks = lokbuch.lok_resource_manager.number_of_loks();
         let mut previews = lokbuch.lok_resource_manager.get_all_previews().clone();
 
-        let header = header(format!("{} Loks vorhanden", num_of_loks));
-
         let input_search = text_input("Suchen...", lokbuch.state.search_input.as_str())
             .id("lok-search")
             .on_input(Message::SearchInputChanged)
@@ -97,7 +96,7 @@ impl Page for HomePage {
             .size(ui::HEADING_TEXT_SIZE)
             .align_x(Center);
 
-        let add_button = button(text("Neue Lok"))
+        let add_button = button(button_decorations("Neue Lok".to_string(), SvgIcon::Plus))
             .on_press(Message::Add)
             .padding(15)
             .width(Fill);
@@ -147,7 +146,7 @@ impl Page for HomePage {
                 ).width(Fill)
             } else {
                 keyed_column(
-                    lokbuch.lok_resource_manager.get_search_results_for(lokbuch.state.search_input.clone())
+                    lokbuch.lok_resource_manager.get_search_results()
                         .into_iter().map(move |item| {
                         let preview = item.clone();
                         (0, iced::widget::column!(
