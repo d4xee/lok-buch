@@ -34,6 +34,6 @@ impl Page for EditPage {
     }
 
     fn view<'a>(&self, lokbuch: &'a Lokbuch) -> Element<'a, Message> {
-        lok_data_input_mask(lokbuch, String::from("Bearbeiten"), Message::EditLok)
+        lok_data_input_mask(lokbuch, t!("edit.edit").to_string(), Message::EditLok)
     }
 }

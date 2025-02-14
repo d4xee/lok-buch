@@ -34,6 +34,6 @@ impl Page for AddPage {
     }
 
     fn view<'a>(&self, lokbuch: &'a Lokbuch) -> Element<'a, Message> {
-        lok_data_input_mask(lokbuch, String::from("Hinzufügen"), Message::AddNewLok)
+        lok_data_input_mask(lokbuch, t!("add.add").to_string(), Message::AddNewLok)
     }
 }

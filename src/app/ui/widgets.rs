@@ -82,12 +82,12 @@ pub fn lok_data_input_mask(lokbuch: &Lokbuch, header_text: String, message_on_fi
             button(image("res/images/blue.png").width(400).content_fit(ContentFit::Cover)).style(button::text),
             column![
                 column!(
-                text("Bezeichnung")
+                text(t!("ui.name"))
                     .size(ui::HEADING_TEXT_SIZE)
                     .align_x(Left)
                     .font(font::bold_font()),
 
-                text_input("Bezeichnung", lokbuch.state.name_input.as_str())
+                text_input(t!("ui.name").to_string().as_str(), lokbuch.state.name_input.as_str())
                     .id("new-lok-name")
                     .on_input(Message::NameInputChanged)
                     .padding(15)
@@ -97,16 +97,16 @@ pub fn lok_data_input_mask(lokbuch: &Lokbuch, header_text: String, message_on_fi
                 vertical_space(),
 
                 column!(
-                text("Analog/Digital")
+                text(t!("ui.analogue_digital"))
                     .size(ui::HEADING_TEXT_SIZE)
                     .align_x(Left)
                     .font(font::bold_font()),
 
-                checkbox("Analog", !lokbuch.state.has_decoder_input)
+                checkbox(t!("ui.analogue"), !lokbuch.state.has_decoder_input)
                     .on_toggle(Message::HasDecoderInputChanged)
                     .text_size(ui::HEADING_TEXT_SIZE),
 
-                checkbox("Digital", lokbuch.state.has_decoder_input)
+                checkbox(t!("ui.digital"), lokbuch.state.has_decoder_input)
                     .on_toggle(Message::HasDecoderInputChanged)
                     .text_size(ui::HEADING_TEXT_SIZE),
             ),
@@ -116,12 +116,12 @@ pub fn lok_data_input_mask(lokbuch: &Lokbuch, header_text: String, message_on_fi
 
     let center_row = row![
             column!(
-                text("Adresse")
+                text(t!("ui.address"))
                 .size(ui::HEADING_TEXT_SIZE)
                 .align_x(Left)
                 .font(font::bold_font()),
 
-                text_input("Adresse", lokbuch.state.address_input.as_str())
+                text_input(t!("ui.address").to_string().as_str(), lokbuch.state.address_input.as_str())
                 .id("new-lok-address")
                 .on_input_maybe(
                     if lokbuch.state.has_decoder_input {
@@ -136,12 +136,12 @@ pub fn lok_data_input_mask(lokbuch: &Lokbuch, header_text: String, message_on_fi
                 .align_x(Left),
             ),
             column![
-                text("LOKmaus-Anzeigename")
+                text(t!("ui.lm_name"))
                 .size(ui::HEADING_TEXT_SIZE)
                 .align_x(Left)
                 .font(font::bold_font()),
 
-                text_input("LOKmaus-Name", lokbuch.state.lok_maus_name_input.as_str())
+                text_input(t!("ui.lm_name").to_string().as_str(), lokbuch.state.lok_maus_name_input.as_str())
                 .id("new-lok-short-name")
                 .on_input_maybe(
                     if lokbuch.state.has_decoder_input {
@@ -159,12 +159,12 @@ pub fn lok_data_input_mask(lokbuch: &Lokbuch, header_text: String, message_on_fi
 
     let lower_row = row![
             column![
-                text("Hersteller")
+                text(t!("ui.producer"))
                 .size(ui::HEADING_TEXT_SIZE)
                 .align_x(Left)
                 .font(font::bold_font()),
 
-                text_input("Hersteller", lokbuch.state.producer_input.as_str())
+                text_input(t!("ui.producer").to_string().as_str(), lokbuch.state.producer_input.as_str())
                 .id("new-lok-producer")
                 .on_input(Message::ProducerInputChanged)
                 .padding(15)
@@ -172,12 +172,12 @@ pub fn lok_data_input_mask(lokbuch: &Lokbuch, header_text: String, message_on_fi
                 .align_x(Left),
             ],
             column!(
-                text("Bahnverwaltung")
+                text(t!("ui.management"))
                 .size(ui::HEADING_TEXT_SIZE)
                 .align_x(Left)
                 .font(font::bold_font()),
 
-                text_input("Bahnverwaltung", lokbuch.state.management_input.as_str())
+                text_input(t!("ui.management").to_string().as_str(), lokbuch.state.management_input.as_str())
                 .id("new-lok-management")
                 .on_input(Message::ManagementInputChanged)
                 .padding(15)
@@ -186,7 +186,7 @@ pub fn lok_data_input_mask(lokbuch: &Lokbuch, header_text: String, message_on_fi
             )
         ].spacing(20).padding(20);
 
-    let add_button = button(text("Speichern"))
+    let add_button = button(text(t!("ui.save")))
         .on_press(message_on_finish)
         .padding(15)
         .width(Fill);
@@ -216,7 +216,7 @@ pub fn sidebar(buttons: iced::widget::Column<Message>, has_cancel_button: bool) 
 
     let side_column = side_column.push(if has_cancel_button {
         column![
-            button(button_decorations(String::from("Abbrechen"), SvgIcon::Back))
+            button(button_decorations(t!("ui.cancel").to_string(), SvgIcon::Back))
             .on_press(Message::Cancel)
             .padding(13)
             .width(Fill),
@@ -230,7 +230,7 @@ pub fn sidebar(buttons: iced::widget::Column<Message>, has_cancel_button: bool) 
         column![
             side_column,
             vertical_space().height(Fill),
-            button(button_decorations("Einstellungen".to_string(), SvgIcon::Gear))
+            button(button_decorations(t!("ui.settings").to_string(), SvgIcon::Gear))
             .on_press(Message::Settings)
             .width(Fill)
             .padding(15),

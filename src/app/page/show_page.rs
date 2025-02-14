@@ -71,7 +71,7 @@ impl Page for ShowPage {
         let lok = task::block_on(lrm.get_lok(lokbuch.state.selected_lok_id.unwrap())).expect("lok not found"); // TODO async show
 
         let left_column = iced::widget::column!(
-                    text("Adresse")
+                    text(t!("show.address"))
                     .size(ui::HEADING_TEXT_SIZE)
                     .font(ui::font::bold_font()),
 
@@ -80,7 +80,7 @@ impl Page for ShowPage {
 
                     vertical_space(),
 
-                    text("Bezeichnung")
+                    text(t!("show.name"))
                     .size(ui::HEADING_TEXT_SIZE)
                     .font(ui::font::bold_font()),
 
@@ -89,7 +89,7 @@ impl Page for ShowPage {
 
                     vertical_space(),
 
-                    text("Hersteller")
+                    text(t!("show.producer"))
                     .size(ui::HEADING_TEXT_SIZE)
                     .font(ui::font::bold_font()),
 
@@ -98,7 +98,7 @@ impl Page for ShowPage {
                 ).spacing(10);
 
         let right_column = iced::widget::column![
-                    text("LOKmaus-Anzeigename")
+                    text(t!("show.lm_name"))
                     .size(ui::HEADING_TEXT_SIZE)
                     .font(ui::font::bold_font()),
 
@@ -110,7 +110,7 @@ impl Page for ShowPage {
                     vertical_space(),
                     vertical_space(),
 
-                    text("Bahnverwaltung")
+                    text(t!("show.management"))
                     .size(ui::HEADING_TEXT_SIZE)
                     .font(ui::font::bold_font()),
 
@@ -118,14 +118,14 @@ impl Page for ShowPage {
                     .size(ui::HEADING_TEXT_SIZE)
                 ].spacing(10);
 
-        let edit_button = button(button_decorations("Bearbeiten".to_string(), SvgIcon::Edit))
+        let edit_button = button(button_decorations(t!("show.edit").to_string(), SvgIcon::Edit))
             .on_press_with(move || {
                 Message::Edit(lokbuch.state.selected_lok_id.clone().unwrap())
             })
             .padding(15)
             .width(Fill);
 
-        let remove_button = button(button_decorations("Löschen".to_string(), SvgIcon::Trash))
+        let remove_button = button(button_decorations(t!("show.delete").to_string(), SvgIcon::Trash))
             .on_press_with(move || {
                 Message::Remove(lokbuch.state.selected_lok_id.clone().unwrap())
             })

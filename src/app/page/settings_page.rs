@@ -20,6 +20,6 @@ impl Page for SettingsPage {
     }
 
     fn view<'a>(&self, lokbuch: &'a Lokbuch) -> Element<'a, Message> {
-        page_layout("Einstellungen".to_string(), iced::widget::Column::new(), Container::new(text("test")), true)
+        page_layout(t!("settings.settings").to_string(), iced::widget::Column::new(), Container::new(text("test")), true)
     }
 }
