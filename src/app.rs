@@ -4,9 +4,11 @@ pub(crate) mod message;
 mod page;
 pub mod backend;
 pub mod ui;
+mod settings;
 
 use crate::app::message::Message;
 use crate::app::page::{Page, Pages};
+use crate::app::settings::Settings;
 use crate::app::state::State;
 use crate::app::stored_data::StoredData;
 use backend::resource_manager::LokResourceManager;
@@ -18,11 +20,12 @@ use std::ops::{Deref, DerefMut};
 const VERSION: &str = env!("CARGO_PKG_VERSION");
 const DB_URL: &str = "sqlite://data/lokbuch.db";
 
-pub struct Lokbuch {
+pub(crate) struct Lokbuch {
     state: State,
     lok_resource_manager: LokResourceManager<SQLiteBackend>,
     moving_icon_frames: iced_gif::Frames,
     page: Pages,
+    settings: Settings,
 }
 
 impl Lokbuch {
@@ -32,8 +35,12 @@ impl Lokbuch {
             state: State::default(),
             lok_resource_manager: LokResourceManager::default(),
             moving_icon_frames: ui::moving_icon_frames(),
+            settings: Settings {},
         },
-         Task::perform(StoredData::init_backend(DB_URL), Message::Loaded))
+         Task::batch(vec![
+             Task::perform(StoredData::init_backend(DB_URL), Message::Loaded),
+             iced::window::get_latest().and_then(move |id| iced::window::toggle_maximize(id))
+         ]))
     }
 
     pub(crate) fn title(&self) -> String {
@@ -48,7 +55,7 @@ impl Lokbuch {
         self.page.as_page_struct().view(self)
     }
 
-    pub fn change_page_to(&mut self, page: Pages) {
+    pub(crate) fn change_page_to(&mut self, page: Pages) {
         self.page = page;
     }
 }

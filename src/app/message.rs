@@ -1,4 +1,5 @@
 use crate::app::stored_data::StoredData;
+use iced::window::Id;
 use rfd::MessageDialogResult;
 
 #[derive(Clone, Debug)]
@@ -21,4 +22,5 @@ pub enum Message {
     InputFailure(MessageDialogResult),
     EditLok,
     Settings,
+    GotId(Option<Id>),
 }

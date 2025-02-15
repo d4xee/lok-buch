@@ -8,7 +8,7 @@ use app::ui;
 use rust_i18n::set_locale;
 
 /// init i18n
-i18n!("res/locales");
+i18n!("res/locales", fallback="en");
 
 /// Starting point of the application
 fn main() -> iced::Result {
