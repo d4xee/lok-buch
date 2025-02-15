@@ -2,7 +2,8 @@ use crate::app::backend::database::lok::Lok;
 use crate::app::Message;
 use iced::Task;
 
-/// The State holds all data that is needed during runtime.
+/// The State holds data for a session.
+/// Does not hold persistent data.
 #[derive(Clone)]
 pub struct State {
     pub name_input: String,
