@@ -17,6 +17,7 @@ loading:
 
 settings:
   settings: "Settings"
+  language: "Language"
 
 show:
   address: "Address"
