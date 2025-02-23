@@ -4,6 +4,7 @@ use crate::app::ui::{font, SvgIcon, VIEW_NAME_TEXT_SIZE, VIEW_TITLE_TEXT_SIZE};
 use crate::app::{ui, Lokbuch};
 use iced::widget::{button, checkbox, column, container, horizontal_space, image, row, svg, text, text_input, vertical_space, Container};
 use iced::{Center, ContentFit, Element, Fill, FillPortion, Left};
+use iced_aw::number_input;
 
 pub fn header<'a>(name: String) -> Element<'a, Message> {
     container(
@@ -102,11 +103,11 @@ pub fn lok_data_input_mask(lokbuch: &Lokbuch, header_text: String, message_on_fi
                     .align_x(Left)
                     .font(font::bold_font()),
 
-                checkbox(t!("ui.analogue"), !lokbuch.state.has_decoder_input)
+                checkbox(t!("ui.analogue"), !lokbuch.state.has_decoder)
                     .on_toggle(Message::HasDecoderInputChanged)
                     .text_size(ui::HEADING_TEXT_SIZE),
 
-                checkbox(t!("ui.digital"), lokbuch.state.has_decoder_input)
+                checkbox(t!("ui.digital"), lokbuch.state.has_decoder)
                     .on_toggle(Message::HasDecoderInputChanged)
                     .text_size(ui::HEADING_TEXT_SIZE),
             ),
@@ -116,24 +117,26 @@ pub fn lok_data_input_mask(lokbuch: &Lokbuch, header_text: String, message_on_fi
 
     let center_row = row![
             column!(
-                text(t!("ui.address"))
-                .size(ui::HEADING_TEXT_SIZE)
-                .align_x(Left)
-                .font(font::bold_font()),
-
-                text_input(t!("ui.address").to_string().as_str(), lokbuch.state.address_input.as_str())
-                .id("new-lok-address")
-                .on_input_maybe(
-                    if lokbuch.state.has_decoder_input {
-                        Some(Message::AddressInputChanged)
-                    }
-                    else {
-                        None
-                    }
-                 )
-                .padding(15)
-                .size(ui::HEADING_TEXT_SIZE)
-                .align_x(Left),
+            text(t!("ui.address"))
+            .size(ui::HEADING_TEXT_SIZE)
+            .align_x(Left)
+            .font(font::bold_font()),
+            
+            if lokbuch.state.has_decoder {
+                container(
+                    number_input(&lokbuch.state.address_input, 0..i32::MAX, Message::AddressInputChanged)
+                    .padding(15)
+                    .size(ui::HEADING_TEXT_SIZE)
+                    .width(Fill)
+                )
+            } else {
+                container(
+                    text_input(t!("ui.address").to_string().as_str(), "")
+                    .padding(15)
+                    .size(ui::HEADING_TEXT_SIZE)
+                    .align_x(Left)
+                )
+            },
             ),
             column![
                 text(t!("ui.lm_name"))
@@ -144,7 +147,7 @@ pub fn lok_data_input_mask(lokbuch: &Lokbuch, header_text: String, message_on_fi
                 text_input(t!("ui.lm_name").to_string().as_str(), lokbuch.state.lok_maus_name_input.as_str())
                 .id("new-lok-short-name")
                 .on_input_maybe(
-                    if lokbuch.state.has_decoder_input {
+                    if lokbuch.state.has_decoder {
                         Some(Message::LokMausNameInputChanged)
                     }
                     else {

@@ -8,7 +8,7 @@ pub enum Message {
     Loaded(PersistentData<SQLiteBackend>),
     Remove(u32),
     NameInputChanged(String),
-    AddressInputChanged(String),
+    AddressInputChanged(i32),
     LokMausNameInputChanged(String),
     ProducerInputChanged(String),
     ManagementInputChanged(String),

@@ -28,9 +28,11 @@ impl Page for ShowPage {
 
                 let name_input = lok.name.clone();
 
+                let has_decoder = lok.has_decoder.clone();
+                
                 let address_input = if let Some(address) = lok.address.clone() {
-                    address.to_string()
-                } else { String::new() };
+                    address
+                } else { 0 };
                 let lok_maus_name_input = if let Some(lokmaus_name) = lok.lokmaus_name.clone() {
                     lokmaus_name
                 } else { String::new() };
@@ -48,6 +50,7 @@ impl Page for ShowPage {
                     lok_maus_name_input,
                     producer_input,
                     management_input,
+                    has_decoder,
                     ..State::default()
                 };
 
