@@ -1,7 +1,7 @@
 use crate::app::message::Message;
 use crate::app::page::{Page, Pages};
-use crate::app::Lokbuch;
 use crate::app::ui;
+use crate::app::Lokbuch;
 use iced::widget::{center, text};
 use iced::{Element, Task};
 
@@ -12,8 +12,9 @@ impl Page for LoadingPage {
         lokbuch.moving_icon_frames = ui::moving_icon_frames();
 
         match message {
-            Message::Loaded(saved_data) => {
-                lokbuch.lok_resource_manager = saved_data.lrm.clone();
+            Message::Loaded(persistent_data) => {
+                lokbuch.lok_resource_manager = persistent_data.get_lok_resource_manager();
+                lokbuch.settings = persistent_data.get_settings();
                 lokbuch.change_page_to(Pages::Home);
             }
             _ => {}
