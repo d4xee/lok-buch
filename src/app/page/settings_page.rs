@@ -2,8 +2,12 @@ use crate::app::message::Message;
 use crate::app::page::{Page, Pages};
 use crate::app::ui::widgets::page_layout;
 use crate::app::Lokbuch;
-use iced::widget::{text, Container};
+use iced::widget::{column, container, text};
 use iced::{Element, Task};
+use iced_aw::SelectionList;
+use rust_i18n::set_locale;
+
+const LANGUAGES: &[&str] = &["en", "de"];
 
 pub struct SettingsPage;
 
@@ -14,12 +18,23 @@ impl Page for SettingsPage {
                 lokbuch.change_page_to(Pages::Home)
             }
 
+            Message::LanguageSelected(index, language) => {
+                println!("{} {}", index, language);
+                lokbuch.settings.language = language.to_string();
+                set_locale(&language);
+            }
             _ => {}
         }
         Task::none()
     }
 
     fn view<'a>(&self, lokbuch: &'a Lokbuch) -> Element<'a, Message> {
-        page_layout(t!("settings.settings").to_string(), iced::widget::Column::new(), Container::new(text("test")), true)
+        let content = container(
+            column![
+                text(t!("settings.language")),
+                SelectionList::new(LANGUAGES, Message::LanguageSelected),
+            ]
+        );
+        page_layout(t!("settings.settings").to_string(), iced::widget::Column::new(), content, true)
     }
 }
