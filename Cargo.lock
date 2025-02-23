@@ -2516,8 +2516,8 @@ dependencies = [
  "iced_gif",
  "rfd",
  "rust-i18n",
-    "serde",
-    "serde_json",
+ "serde",
+ "serde_json",
  "sqlx",
  "time",
 ]
