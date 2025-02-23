@@ -1,10 +1,11 @@
-use crate::app::stored_data::StoredData;
-use iced::window::Id;
+use crate::app::backend::sqlite_backend::SQLiteBackend;
+use crate::app::persistent_data::PersistentData;
+use iced::Event;
 use rfd::MessageDialogResult;
 
 #[derive(Clone, Debug)]
 pub enum Message {
-    Loaded(StoredData),
+    Loaded(PersistentData<SQLiteBackend>),
     Remove(u32),
     NameInputChanged(String),
     AddressInputChanged(String),
@@ -22,5 +23,5 @@ pub enum Message {
     InputFailure(MessageDialogResult),
     EditLok,
     Settings,
-    GotId(Option<Id>),
+    EventOccurred(Event),
 }
