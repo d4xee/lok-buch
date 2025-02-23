@@ -1,17 +1,18 @@
 use crate::app::backend::database::lok::Lok;
 use crate::app::Message;
 use iced::Task;
+use std::u32;
 
 /// The State holds data for a session.
 /// Does not hold persistent data.
 #[derive(Clone)]
 pub struct State {
     pub name_input: String,
-    pub address_input: String,
+    pub address_input: i32,
     pub lok_maus_name_input: String,
     pub producer_input: String,
     pub management_input: String,
-    pub has_decoder_input: bool,
+    pub has_decoder: bool,
     pub image_path_input: String,
     pub search_input: String,
     pub selected_lok_id: Option<u32>,
@@ -22,11 +23,11 @@ impl State {
     /// These are usually the user inputs.
     pub fn clear(&mut self) {
         self.name_input.clear();
-        self.address_input.clear();
+        self.address_input = 0;
         self.lok_maus_name_input.clear();
         self.producer_input.clear();
         self.management_input.clear();
-        self.has_decoder_input = false;
+        self.has_decoder = false;
         self.image_path_input.clear();
         self.search_input.clear();
         self.selected_lok_id = None;
@@ -36,19 +37,19 @@ impl State {
     pub fn get_lok_from_current_state(&self) -> Lok {
         Lok::new_from_raw_data(
             self.name_input.clone(),
-            if self.has_decoder_input {
-                self.address_input.clone().parse::<i32>().unwrap_or(-1)
+            if self.has_decoder {
+                self.address_input as i32
             } else {
                 -1
             },
-            if self.has_decoder_input {
+            if self.has_decoder {
                 self.lok_maus_name_input.clone().to_string().to_uppercase()
             } else {
                 "".to_string()
             },
             self.producer_input.clone(),
             self.management_input.clone(),
-            self.has_decoder_input.clone(),
+            self.has_decoder.clone(),
             self.image_path_input.clone(),
         )
     }
@@ -65,30 +66,7 @@ impl State {
             return Err(Task::perform(res.show(), Message::InputFailure));
         }
 
-        if self.has_decoder_input {
-            if !self.address_input.clone().is_empty() {
-                let address = self.address_input.clone().parse::<i32>();
-                if address.is_ok() {
-                    let address = address.unwrap();
-
-                    if address <= 0 {
-                        let res = rfd::AsyncMessageDialog::new()
-                            .set_title("Eingabefehler")
-                            .set_description("Adresse muss eine Zahl größer als 0 sein!")
-                            .set_buttons(rfd::MessageButtons::Ok);
-
-                        return Err(Task::perform(res.show(), Message::InputFailure));
-                    }
-                } else {
-                    let res = rfd::AsyncMessageDialog::new()
-                        .set_title("Eingabefehler")
-                        .set_description("Adresse muss eine Zahl sein!")
-                        .set_buttons(rfd::MessageButtons::Ok);
-
-                    return Err(Task::perform(res.show(), Message::InputFailure));
-                }
-            }
-
+        if self.has_decoder {
             if self.lok_maus_name_input.len() > 5 {
                 let res = rfd::AsyncMessageDialog::new()
                     .set_title("Eingabefehler")
@@ -121,7 +99,7 @@ impl State {
                 self.management_input = management;
             }
             Message::HasDecoderInputChanged(_) => {
-                self.has_decoder_input = !self.has_decoder_input;
+                self.has_decoder = !self.has_decoder;
             }
             _ => {}
         }
@@ -132,11 +110,11 @@ impl Default for State {
     fn default() -> Self {
         State {
             name_input: String::default(),
-            address_input: String::default(),
+            address_input: 0,
             lok_maus_name_input: String::default(),
             producer_input: String::default(),
             management_input: String::default(),
-            has_decoder_input: false,
+            has_decoder: false,
             image_path_input: String::default(),
             search_input: String::default(),
             selected_lok_id: None,
