@@ -17,7 +17,7 @@ impl Settings {
     pub fn path() -> std::path::PathBuf {
         let mut path = std::env::current_dir().unwrap();
 
-        path.push("res/settings.json");
+        path.push("data/settings.json");
 
         path
     }

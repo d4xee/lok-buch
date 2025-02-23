@@ -55,6 +55,16 @@ impl Lokbuch {
                     Task::none()
                 }
             }
+
+            Message::Settings => {
+                self.state = State {
+                    ..State::default()
+                };
+
+                self.change_page_to(Pages::Settings);
+                Task::none()
+            }
+
             _ => self.page.as_page_struct().update(self, message)
         }
     }

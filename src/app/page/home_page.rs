@@ -72,14 +72,6 @@ impl Page for HomePage {
                 lokbuch.change_page_to(Pages::Home);
             }
 
-            Message::Settings => {
-                lokbuch.state = State {
-                    ..State::default()
-                };
-
-                lokbuch.change_page_to(Pages::Settings);
-            }
-
             _ => {}
         }
         Task::none()
