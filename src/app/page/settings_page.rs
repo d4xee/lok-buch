@@ -1,5 +1,6 @@
 use crate::app::message::Message;
 use crate::app::page::{Page, Pages};
+use crate::app::settings::languages::Languages;
 use crate::app::ui::widgets::page_layout;
 use crate::app::Lokbuch;
 use iced::widget::{column, container, text};
@@ -21,7 +22,7 @@ impl Page for SettingsPage {
             Message::LanguageSelected(index, language) => {
                 println!("{} {}", index, language);
                 lokbuch.settings.language = language.to_string();
-                set_locale(&language);
+                set_locale(&language.short_language_code());
             }
             _ => {}
         }
@@ -32,9 +33,10 @@ impl Page for SettingsPage {
         let content = container(
             column![
                 text(t!("settings.language")),
-                SelectionList::new(LANGUAGES, Message::LanguageSelected),
+                SelectionList::new(&Languages::ALL, Message::LanguageSelected),
             ]
         );
+
         page_layout(t!("settings.settings").to_string(), iced::widget::Column::new(), content, true)
     }
 }

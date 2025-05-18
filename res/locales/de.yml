@@ -19,6 +19,10 @@ settings:
   settings: "Einstellungen"
   language: "Sprache"
 
+lang:
+  de: "Deutsch"
+  en: "Englisch"
+
 show:
   address: "Addresse"
   delete: "Löschen"
