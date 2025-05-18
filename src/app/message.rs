@@ -1,5 +1,6 @@
 use crate::app::backend::sqlite_backend::SQLiteBackend;
 use crate::app::persistent_data::PersistentData;
+use crate::app::settings::languages::Languages;
 use iced::Event;
 use rfd::MessageDialogResult;
 
@@ -14,7 +15,7 @@ pub enum Message {
     EventOccurred(Event),
     HasDecoderInputChanged(bool),
     InputFailure(MessageDialogResult),
-    LanguageSelected(usize, &'static str),
+    LanguageSelected(usize, Languages),
     Loaded(PersistentData<SQLiteBackend>),
     LokMausNameInputChanged(String),
     ManagementInputChanged(String),

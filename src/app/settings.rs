@@ -1,3 +1,5 @@
+pub mod languages;
+
 use serde::{Deserialize, Serialize};
 use std::io::{Read, Write};
 
