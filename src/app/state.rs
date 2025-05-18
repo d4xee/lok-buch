@@ -59,8 +59,8 @@ impl State {
     pub fn validate(&self) -> Result<(), Task<Message>> {
         if self.name_input.is_empty() {
             let res = rfd::AsyncMessageDialog::new()
-                .set_title("Eingabefehler")
-                .set_description("Bezeichnung darf nicht leer sein!")
+                .set_title(t!("state.input_error"))
+                .set_description(t!("state.name_must_not_empty"))
                 .set_buttons(rfd::MessageButtons::Ok);
 
             return Err(Task::perform(res.show(), Message::InputFailure));
@@ -69,8 +69,8 @@ impl State {
         if self.has_decoder {
             if self.lok_maus_name_input.len() > 5 {
                 let res = rfd::AsyncMessageDialog::new()
-                    .set_title("Eingabefehler")
-                    .set_description("Der LOKmaus-Anzeigename darf nicht länger als 5 Zeichen sein!")
+                    .set_title(t!("state.input_error"))
+                    .set_description(t!("state.lm_name_too_long"))
                     .set_buttons(rfd::MessageButtons::Ok);
 
                 return Err(Task::perform(res.show(), Message::InputFailure));

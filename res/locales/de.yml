@@ -44,3 +44,8 @@ ui:
   producer: "Hersteller"
   save: "Speichern"
   settings: "Einstellungen"
+
+state:
+  input_error: "Eingabefehler"
+  name_must_not_empty: "Bezeichnung darf nicht leer sein!"
+  lm_name_too_long: "LOKmaus-Anzeigename darf nicht länger als 5 Zeichen sein!"

@@ -44,3 +44,8 @@ ui:
   producer: "Producer"
   save: "Save"
   settings: "Settings"
+  
+  state:
+    input_error: "Input Error"
+    name_must_not_empty: "Name must not be empty!"
+    lm_name_too_long: "LOKmaus-Name must not be longer than 5 characters!"
