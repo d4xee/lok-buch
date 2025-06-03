@@ -21,7 +21,7 @@ impl Page for SettingsPage {
 
             Message::LanguageSelected(index, language) => {
                 println!("{} {}", index, language);
-                lokbuch.settings.language = language.to_string();
+                lokbuch.settings.language = language.short_language_code();
                 set_locale(&language.short_language_code());
             }
             _ => {}
