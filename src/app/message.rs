@@ -19,11 +19,12 @@ pub enum Message {
     Loaded(PersistentData<SQLiteBackend>),
     LokMausNameInputChanged(String),
     ManagementInputChanged(String),
-    NameInputChanged(String),
     ManufacturerInputChanged(String),
+    NameInputChanged(String),
     Remove(u32),
     Saved(u32),
     SearchInputChanged(String),
+    SelectImageFile,
     Settings,
     ShowLok(u32),
 }

@@ -80,7 +80,12 @@ pub fn preview_widget<'a>(preview_data: PreviewLok) -> Container<'a, Message> {
 /// The message on finish is emitted when the save button was pressed.
 pub fn lok_data_input_mask(lokbuch: &Lokbuch, header_text: String, message_on_finish: Message) -> Element<Message> {
     let upper_row = row![
-            button(image("res/images/blue.png").width(400).content_fit(ContentFit::Cover)).style(button::text),
+            button(image(lokbuch.state.get_current_lok_image_path())
+                    .width(400)
+                    .content_fit(ContentFit::Fill)
+                )
+                .on_press(Message::SelectImageFile)
+                .style(button::text),
             column![
                 column!(
                 text(t!("ui.name"))
