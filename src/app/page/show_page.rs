@@ -6,7 +6,8 @@ use crate::app::ui::widgets::{button_decorations, page_layout};
 use crate::app::ui::SvgIcon;
 use crate::app::Lokbuch;
 use async_std::task;
-use iced::widget::{button, container, horizontal_space, row, text, text_input, vertical_space};
+use iced::widget::operation::focus;
+use iced::widget::{button, container, row, space, text};
 use iced::{Element, Fill, Task};
 
 pub struct ShowPage;
@@ -16,7 +17,7 @@ impl Page for ShowPage {
         match message {
             Message::Add => {
                 lokbuch.change_page_to(Pages::Add);
-                return text_input::focus("new-lok-name");
+                return focus("new-lok-name");
             }
 
             Message::Cancel => {
@@ -55,7 +56,7 @@ impl Page for ShowPage {
                 };
 
                 lokbuch.change_page_to(Pages::Edit);
-                return text_input::focus("new-lok-name");
+                return focus("new-lok-name");
             }
 
             Message::Remove(id) => {
@@ -81,7 +82,7 @@ impl Page for ShowPage {
                     text!("{}", lok.get_address_pretty())
                     .size(ui::HEADING_TEXT_SIZE),
 
-                    vertical_space(),
+                    space::vertical(),
 
                     text(t!("show.name"))
                     .size(ui::HEADING_TEXT_SIZE)
@@ -90,7 +91,7 @@ impl Page for ShowPage {
                     text!("{}", lok.name)
                     .size(ui::HEADING_TEXT_SIZE),
 
-                    vertical_space(),
+                    space::vertical(),
 
                     text(t!("show.producer"))
                     .size(ui::HEADING_TEXT_SIZE)
@@ -108,10 +109,10 @@ impl Page for ShowPage {
                     text!("{}", lok.get_lokmaus_name_pretty())
                     .size(ui::HEADING_TEXT_SIZE),
 
-                    vertical_space(),
-                    vertical_space(),
-                    vertical_space(),
-                    vertical_space(),
+                    space::vertical(),
+                    space::vertical(),
+                    space::vertical(),
+                    space::vertical(),
 
                     text(t!("show.management"))
                     .size(ui::HEADING_TEXT_SIZE)
@@ -139,11 +140,11 @@ impl Page for ShowPage {
         let content = container(
             iced::widget::column![
                 row![
-                    horizontal_space(),
+                    space::horizontal(),
                     left_column,
-                    horizontal_space(),
+                    space::horizontal(),
                     right_column,
-                    horizontal_space(),
+                    space::horizontal(),
                 ].width(Fill).height(Fill)
             ].width(Fill)
         );

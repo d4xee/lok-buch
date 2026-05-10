@@ -2,7 +2,7 @@ use crate::app::backend::database::preview_lok::PreviewLok;
 use crate::app::message::Message;
 use crate::app::ui::{font, SvgIcon, VIEW_NAME_TEXT_SIZE, VIEW_TITLE_TEXT_SIZE};
 use crate::app::{ui, Lokbuch};
-use iced::widget::{button, checkbox, column, container, horizontal_space, image, row, svg, text, text_input, vertical_space, Container};
+use iced::widget::{button, checkbox, column, container, image, row, space, svg, text, text_input, Container};
 use iced::{Center, ContentFit, Element, Fill, FillPortion, Left};
 use iced_aw::number_input;
 
@@ -22,7 +22,7 @@ pub fn header<'a>(name: String) -> Element<'a, Message> {
             .color([0.5, 0.5, 0.5])
             .align_x(Center),
 
-        vertical_space()
+        space::vertical()
         .height(15)
     )
             .spacing(20)
@@ -37,7 +37,7 @@ pub fn preview_widget<'a>(preview_data: PreviewLok) -> Container<'a, Message> {
     let preview_id = preview_data.get_id();
 
     let button_row = row![
-        horizontal_space(),
+        space::horizontal(),
         button(font::edit_icon())
         .on_press_with(move || {
             Message::Edit(preview_id)
@@ -55,20 +55,20 @@ pub fn preview_widget<'a>(preview_data: PreviewLok) -> Container<'a, Message> {
     container(row![
         row![
             text!("{}", preview_data.get_address_pretty()),
-            horizontal_space(),
+            space::horizontal(),
         ],
 
         row![
             text!("{}", preview_data.get_lokmaus_name_pretty()),
-            horizontal_space(),
+            space::horizontal(),
         ],
 
         row![
             text!("{}", preview_data.get_name_pretty()),
-            horizontal_space(),
+            space::horizontal(),
         ],
 
-        horizontal_space(),
+        space::horizontal(),
         button_row
         ])
         .padding(10)
@@ -95,7 +95,7 @@ pub fn lok_data_input_mask(lokbuch: &Lokbuch, header_text: String, message_on_fi
                     .size(ui::HEADING_TEXT_SIZE)
                     .align_x(Left),
                 ),
-                vertical_space(),
+                space::vertical(),
 
                 column!(
                 text(t!("ui.analogue_digital"))
@@ -103,15 +103,17 @@ pub fn lok_data_input_mask(lokbuch: &Lokbuch, header_text: String, message_on_fi
                     .align_x(Left)
                     .font(font::bold_font()),
 
-                checkbox(t!("ui.analogue"), !lokbuch.state.has_decoder)
+                checkbox(!lokbuch.state.has_decoder)
+                    .label(t!("ui.analogue"))
                     .on_toggle(Message::HasDecoderInputChanged)
                     .text_size(ui::HEADING_TEXT_SIZE),
 
-                checkbox(t!("ui.digital"), lokbuch.state.has_decoder)
+                checkbox(lokbuch.state.has_decoder)
+                    .label(t!("ui.digital"))
                     .on_toggle(Message::HasDecoderInputChanged)
                     .text_size(ui::HEADING_TEXT_SIZE),
-            ),
-                vertical_space(),
+                ),
+                space::vertical(),
             ]
         ].spacing(20).padding(20);
 
@@ -126,7 +128,7 @@ pub fn lok_data_input_mask(lokbuch: &Lokbuch, header_text: String, message_on_fi
                 container(
                     number_input(&lokbuch.state.address_input, 0..i32::MAX, Message::AddressInputChanged)
                     .padding(15)
-                    .size(ui::HEADING_TEXT_SIZE)
+                    .line_height(ui::HEADING_TEXT_SIZE)
                     .width(Fill)
                 )
             } else {
@@ -201,11 +203,11 @@ pub fn lok_data_input_mask(lokbuch: &Lokbuch, header_text: String, message_on_fi
                     upper_row,
                 ],
                 column![
-                    vertical_space(),
+                    space::vertical(),
                     center_row,
-                    vertical_space(),
+                    space::vertical(),
                     lower_row,
-                    vertical_space()
+                    space::vertical(),
                 ]
             ].height(Fill),
         ].width(Fill)
@@ -232,7 +234,7 @@ pub fn sidebar(buttons: iced::widget::Column<Message>, has_cancel_button: bool) 
     container(
         column![
             side_column,
-            vertical_space().height(Fill),
+            space::vertical().height(Fill),
             button(button_decorations(t!("ui.settings").to_string(), SvgIcon::Gear))
             .on_press(Message::Settings)
             .width(Fill)

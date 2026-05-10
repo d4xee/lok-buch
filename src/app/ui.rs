@@ -1,11 +1,11 @@
 pub mod widgets;
 pub mod font;
 
-const VIEW_NAME_TEXT_SIZE: u16 = 25;
-const VIEW_TITLE_TEXT_SIZE: u16 = 75;
-pub const HEADING_TEXT_SIZE: u16 = 20;
+const VIEW_NAME_TEXT_SIZE: u32 = 25;
+const VIEW_TITLE_TEXT_SIZE: u32 = 75;
+pub const HEADING_TEXT_SIZE: f32 = 20.0;
 
-pub const SVG_ICON_HEIGHT: u16 = 25;
+pub const SVG_ICON_HEIGHT: u32 = 25;
 
 pub const NO_DATA_AVAILABLE_TEXT: &str = "---";
 
