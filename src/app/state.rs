@@ -10,7 +10,7 @@ pub struct State {
     pub name_input: String,
     pub address_input: i32,
     pub lok_maus_name_input: String,
-    pub producer_input: String,
+    pub manufacturer_input: String,
     pub management_input: String,
     pub has_decoder: bool,
     pub image_path_input: String,
@@ -25,7 +25,7 @@ impl State {
         self.name_input.clear();
         self.address_input = 0;
         self.lok_maus_name_input.clear();
-        self.producer_input.clear();
+        self.manufacturer_input.clear();
         self.management_input.clear();
         self.has_decoder = false;
         self.image_path_input.clear();
@@ -47,7 +47,7 @@ impl State {
             } else {
                 "".to_string()
             },
-            self.producer_input.clone(),
+            self.manufacturer_input.clone(),
             self.management_input.clone(),
             self.has_decoder.clone(),
             self.image_path_input.clone(),
@@ -92,8 +92,8 @@ impl State {
             Message::LokMausNameInputChanged(name) => {
                 self.lok_maus_name_input = name;
             }
-            Message::ProducerInputChanged(producer) => {
-                self.producer_input = producer;
+            Message::ManufacturerInputChanged(producer) => {
+                self.manufacturer_input = producer;
             }
             Message::ManagementInputChanged(management) => {
                 self.management_input = management;
@@ -112,7 +112,7 @@ impl Default for State {
             name_input: String::default(),
             address_input: 0,
             lok_maus_name_input: String::default(),
-            producer_input: String::default(),
+            manufacturer_input: String::default(),
             management_input: String::default(),
             has_decoder: false,
             image_path_input: String::default(),

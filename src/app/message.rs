@@ -20,7 +20,7 @@ pub enum Message {
     LokMausNameInputChanged(String),
     ManagementInputChanged(String),
     NameInputChanged(String),
-    ProducerInputChanged(String),
+    ManufacturerInputChanged(String),
     Remove(u32),
     Saved(u32),
     SearchInputChanged(String),

@@ -76,7 +76,7 @@ pub fn preview_widget<'a>(preview_data: PreviewLok) -> Container<'a, Message> {
         .width(Fill)
 }
 
-/// Layouts the input mask for adding and editing a Lok.
+/// Lays out the input mask for adding and editing a Lok.
 /// The message on finish is emitted when the save button was pressed.
 pub fn lok_data_input_mask(lokbuch: &Lokbuch, header_text: String, message_on_finish: Message) -> Element<Message> {
     let upper_row = row![
@@ -128,7 +128,6 @@ pub fn lok_data_input_mask(lokbuch: &Lokbuch, header_text: String, message_on_fi
                 container(
                     number_input(&lokbuch.state.address_input, 0..i32::MAX, Message::AddressInputChanged)
                     .padding(15)
-                    .line_height(ui::HEADING_TEXT_SIZE)
                     .width(Fill)
                 )
             } else {
@@ -169,9 +168,9 @@ pub fn lok_data_input_mask(lokbuch: &Lokbuch, header_text: String, message_on_fi
                 .align_x(Left)
                 .font(font::bold_font()),
 
-                text_input(t!("ui.producer").to_string().as_str(), lokbuch.state.producer_input.as_str())
+                text_input(t!("ui.producer").to_string().as_str(), lokbuch.state.manufacturer_input.as_str())
                 .id("new-lok-producer")
-                .on_input(Message::ProducerInputChanged)
+                .on_input(Message::ManufacturerInputChanged)
                 .padding(15)
                 .size(ui::HEADING_TEXT_SIZE)
                 .align_x(Left),
