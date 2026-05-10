@@ -49,7 +49,7 @@ impl Page for ShowPage {
                     name_input,
                     address_input,
                     lok_maus_name_input,
-                    producer_input,
+                    manufacturer_input: producer_input,
                     management_input,
                     has_decoder,
                     ..State::default()
