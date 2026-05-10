@@ -28,7 +28,7 @@ impl Page for EditPage {
             }
             Message::SelectImageFile => {
                 let file = FileDialog::new()
-                    .add_filter(t!("add.image_files"), &["png", "jpg", "jpeg"])
+                    .add_filter(t!("edit.image_files"), &["png", "jpg", "jpeg"])
                     .pick_file();
 
                 // if a file was selected, it is copied to user data and timestamped
