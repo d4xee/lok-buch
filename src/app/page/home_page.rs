@@ -6,7 +6,8 @@ use crate::app::ui::widgets::{button_decorations, page_layout, preview_widget};
 use crate::app::ui::SvgIcon;
 use crate::app::Lokbuch;
 use async_std::task;
-use iced::widget::{button, column, container, horizontal_space, keyed_column, row, scrollable, text, text_input, vertical_space};
+use iced::widget::operation::focus;
+use iced::widget::{button, column, container, keyed_column, row, scrollable, space, text, text_input};
 use iced::{Center, Element, Fill, FillPortion, Task};
 
 pub struct HomePage;
@@ -16,7 +17,7 @@ impl Page for HomePage {
         match message {
             Message::Add => {
                 lokbuch.change_page_to(Pages::Add);
-                return text_input::focus("new-lok-name");
+                return focus("new-lok-name");
             }
 
             Message::SearchInputChanged(search_input) => {
@@ -66,7 +67,7 @@ impl Page for HomePage {
                 };
 
                 lokbuch.change_page_to(Pages::Edit);
-                return text_input::focus("new-lok-name");
+                return focus("new-lok-name");
             }
 
             Message::Remove(id) => {
@@ -97,30 +98,30 @@ impl Page for HomePage {
             .width(Fill);
 
         let text_row = row![
-                    horizontal_space()
+                    space::horizontal()
                     .width(10),
 
                     text(t!("home.address"))
                     .size(ui::HEADING_TEXT_SIZE)
                     .font(ui::font::bold_font()),
 
-                    horizontal_space(),
+                    space::horizontal(),
 
                     text(t!("home.lm_name"))
                     .size(ui::HEADING_TEXT_SIZE)
                     .font(ui::font::bold_font()),
 
-                    horizontal_space(),
+                    space::horizontal(),
 
                     text(t!("home.name"))
                     .size(ui::HEADING_TEXT_SIZE)
                     .font(ui::font::bold_font()),
 
-                    horizontal_space(),
+                    space::horizontal(),
 
-                    horizontal_space(),
+                    space::horizontal(),
 
-                    horizontal_space()
+                    space::horizontal()
                 ];
 
         let loks =
@@ -134,7 +135,7 @@ impl Page for HomePage {
                         .on_press_with(move || {
                             Message::ShowLok(item.clone().get_id())
                         }),
-                        vertical_space()
+                        space::vertical()
                             .height(10))
                             .into())
                     })
@@ -150,7 +151,7 @@ impl Page for HomePage {
                         .on_press_with(move || {
                             Message::ShowLok(item.clone().get_id())
                         }),
-                        vertical_space()
+                        space::vertical()
                             .height(10))
                             .into())
                     })

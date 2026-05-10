@@ -37,7 +37,7 @@ impl Lokbuch {
         },
          Task::batch(vec![
              Task::perform(PersistentData::init_app_and_backend(DB_URL), Message::Loaded),
-             iced::window::get_latest().and_then(move |id| iced::window::toggle_maximize(id))
+             iced::window::latest().and_then(move |id| iced::window::toggle_maximize(id))
          ]))
     }
 
@@ -50,7 +50,7 @@ impl Lokbuch {
             Message::EventOccurred(event) => {
                 if let Event::Window(window::Event::CloseRequested) = event {
                     self.settings.save();
-                    window::get_latest().and_then(window::close)
+                    window::latest().and_then(window::close)
                 } else {
                     Task::none()
                 }
