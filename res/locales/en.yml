@@ -8,9 +8,11 @@ home:
 
 add:
   add: "Add new Loco"
+  image_files: "Image Files"
 
 edit:
   edit: "Edit Loco"
+  image_files: "Image Files"
 
 loading:
   loading: "Loading..."

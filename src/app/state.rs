@@ -1,7 +1,7 @@
 use crate::app::backend::database::lok::Lok;
+use crate::app::ui;
 use crate::app::Message;
 use iced::Task;
-use std::u32;
 
 /// The State holds data for a session.
 /// Does not hold persistent data.
@@ -102,6 +102,51 @@ impl State {
                 self.has_decoder = !self.has_decoder;
             }
             _ => {}
+        }
+    }
+
+    /// Returns the path to the current lok image.
+    /// If no image is selected, the default image is returned.
+    pub fn get_current_lok_image_path(&self) -> String {
+        if self.image_path_input.is_empty() {
+            String::from(ui::DEFAULT_LOCO_IMAGE_PATH)
+        } else {
+            self.image_path_input.clone()
+        }
+    }
+
+    /// Copies all properties of a given Lok into a new state
+    pub fn create_state_from_id_and_lok(id: u32, lok: &Lok) -> State {
+        let name_input = lok.name.clone();
+
+        let has_decoder = lok.has_decoder.clone();
+
+        let address_input = if let Some(address) = lok.address.clone() {
+            address
+        } else { 0 };
+        let lok_maus_name_input = if let Some(lokmaus_name) = lok.lokmaus_name.clone() {
+            lokmaus_name
+        } else { String::new() };
+        let producer_input = if let Some(producer) = lok.producer.clone() {
+            producer
+        } else { String::new() };
+        let management_input = if let Some(management) = lok.management.clone() {
+            management
+        } else { String::new() };
+        let image_path_input = if let Some(image_path) = lok.image_path.clone() {
+            image_path
+        } else { String::new() };
+
+        State {
+            selected_lok_id: Some(id),
+            name_input,
+            address_input,
+            lok_maus_name_input,
+            manufacturer_input: producer_input,
+            management_input,
+            has_decoder,
+            image_path_input,
+            ..State::default()
         }
     }
 }

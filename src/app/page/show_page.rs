@@ -7,8 +7,8 @@ use crate::app::ui::SvgIcon;
 use crate::app::Lokbuch;
 use async_std::task;
 use iced::widget::operation::focus;
-use iced::widget::{button, container, row, space, text};
-use iced::{Element, Fill, Task};
+use iced::widget::{button, container, image, row, space, text};
+use iced::{ContentFit, Element, Fill, Task};
 
 pub struct ShowPage;
 
@@ -21,39 +21,14 @@ impl Page for ShowPage {
             }
 
             Message::Cancel => {
+                lokbuch.state.clear();
                 lokbuch.change_page_to(Pages::Home);
             }
 
             Message::Edit(id) => {
                 let lok = task::block_on(lokbuch.lok_resource_manager.get_lok(id)).expect("Lok does not exist!"); // TODO async edit
 
-                let name_input = lok.name.clone();
-
-                let has_decoder = lok.has_decoder.clone();
-                
-                let address_input = if let Some(address) = lok.address.clone() {
-                    address
-                } else { 0 };
-                let lok_maus_name_input = if let Some(lokmaus_name) = lok.lokmaus_name.clone() {
-                    lokmaus_name
-                } else { String::new() };
-                let producer_input = if let Some(producer) = lok.producer.clone() {
-                    producer
-                } else { String::new() };
-                let management_input = if let Some(management) = lok.management.clone() {
-                    management
-                } else { String::new() };
-
-                lokbuch.state = State {
-                    selected_lok_id: Some(id),
-                    name_input,
-                    address_input,
-                    lok_maus_name_input,
-                    manufacturer_input: producer_input,
-                    management_input,
-                    has_decoder,
-                    ..State::default()
-                };
+                lokbuch.state = State::create_state_from_id_and_lok(id, &lok);
 
                 lokbuch.change_page_to(Pages::Edit);
                 return focus("new-lok-name");
@@ -75,20 +50,18 @@ impl Page for ShowPage {
         let lok = task::block_on(lrm.get_lok(lokbuch.state.selected_lok_id.unwrap())).expect("lok not found"); // TODO async show
 
         let left_column = iced::widget::column!(
+                    image(lokbuch.state.get_current_lok_image_path())
+                    .width(400)
+                    .height(200)
+                    .content_fit(ContentFit::Cover),
+
+                    space::vertical(),
+
                     text(t!("show.address"))
                     .size(ui::HEADING_TEXT_SIZE)
                     .font(ui::font::bold_font()),
 
                     text!("{}", lok.get_address_pretty())
-                    .size(ui::HEADING_TEXT_SIZE),
-
-                    space::vertical(),
-
-                    text(t!("show.name"))
-                    .size(ui::HEADING_TEXT_SIZE)
-                    .font(ui::font::bold_font()),
-
-                    text!("{}", lok.name)
                     .size(ui::HEADING_TEXT_SIZE),
 
                     space::vertical(),
@@ -102,6 +75,15 @@ impl Page for ShowPage {
                 ).spacing(10);
 
         let right_column = iced::widget::column![
+                    text(t!("show.name"))
+                    .size(ui::HEADING_TEXT_SIZE)
+                    .font(ui::font::bold_font()),
+
+                    text!("{}", lok.name)
+                    .size(ui::HEADING_TEXT_SIZE),
+
+                    space::vertical(),
+
                     text(t!("show.lm_name"))
                     .size(ui::HEADING_TEXT_SIZE)
                     .font(ui::font::bold_font()),
@@ -109,9 +91,6 @@ impl Page for ShowPage {
                     text!("{}", lok.get_lokmaus_name_pretty())
                     .size(ui::HEADING_TEXT_SIZE),
 
-                    space::vertical(),
-                    space::vertical(),
-                    space::vertical(),
                     space::vertical(),
 
                     text(t!("show.management"))

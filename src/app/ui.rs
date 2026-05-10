@@ -11,6 +11,8 @@ pub const NO_DATA_AVAILABLE_TEXT: &str = "---";
 
 pub const ICON_PATH: &str = "res/images/icon.png";
 
+pub const DEFAULT_LOCO_IMAGE_PATH: &str = "res/images/default.png";
+
 pub fn moving_icon_frames() -> iced_gif::Frames {
     iced_gif::Frames::from_bytes(include_bytes!("../../res/images/icon_move.gif").into()).expect("Decoding gif failed!")
 }
